@@ -7,13 +7,31 @@ node_0x504000000010 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor
        label="  { OP | ADD }"];
 { rank=source; node_0x504000000010 };
 node_0x504000000050 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
-       label="  { NUM | 5 }"];
-{ rank=sink; node_0x504000000050 };
-edge [color="#FFFFFF"];
-node_0x504000000010:sw -> node_0x504000000050:n [color="#228B22"]
-;node_0x504000000090 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
-       label="  { VAR | 0 }"];
+       label="  { OP | SUB }"];
+node_0x504000000090 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
+       label="  { NUM | 2 }"];
 { rank=sink; node_0x504000000090 };
 edge [color="#FFFFFF"];
-node_0x504000000010:se -> node_0x504000000090:n [color="#228B22"]
+node_0x504000000050:sw -> node_0x504000000090:n [color="#228B22"]
+;node_0x5040000000d0 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
+       label="  { VAR | 0 }"];
+{ rank=sink; node_0x5040000000d0 };
+edge [color="#FFFFFF"];
+node_0x504000000050:se -> node_0x5040000000d0:n [color="#228B22"]
+;edge [color="#FFFFFF"];
+node_0x504000000010:sw -> node_0x504000000050:n [color="#228B22"]
+;node_0x504000000110 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
+       label="  { OP | MUL }"];
+node_0x504000000150 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
+       label="  { VAR | 1 }"];
+{ rank=sink; node_0x504000000150 };
+edge [color="#FFFFFF"];
+node_0x504000000110:sw -> node_0x504000000150:n [color="#228B22"]
+;node_0x504000000190 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
+       label="  { VAR | 2 }"];
+{ rank=sink; node_0x504000000190 };
+edge [color="#FFFFFF"];
+node_0x504000000110:se -> node_0x504000000190:n [color="#228B22"]
+;edge [color="#FFFFFF"];
+node_0x504000000010:se -> node_0x504000000110:n [color="#228B22"]
 ;}

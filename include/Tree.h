@@ -14,6 +14,9 @@ typedef double TreeElem_t;
 
 const TreeElem_t POIZON_VAL = 0x0D01B0EB;
 
+const int DATA_SIZE = 64;
+const int MAX_VARS = 2;
+
 enum Type_t {
     OP,
     NUM,
@@ -54,8 +57,6 @@ struct LogCtx_t {
     size_t num_picts;
 };
 
-const int DATA_SIZE = 64;
-const int MAX_VARS = 3;
 
 TreeErr_t PreOrderCtor(Tree_t *Tree, const char *file_name);
 TreeErr_t PostOrderCtor(Tree_t *Tree, const char *file_name);

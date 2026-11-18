@@ -5,8 +5,6 @@ static TreeElem_t VarList[MAX_VARS] = {
     5
 };
 
-static int CountVars = 0;
-
 TreeErr_t PreOrderCtor(Tree_t *Tree, const char *file_name)
 {
     char *buf = NULL;
@@ -103,7 +101,7 @@ void PrintPreOrder(TreeNode_t *Node)
         
         case VAR:
             printf("%c", 'x' + (int)Node->data);
-            break;
+        break;
 
         default:
             ;
@@ -339,6 +337,7 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
     char data[DATA_SIZE] = {};
     size_t len = 0;
     int num_elems = 0;
+    int flag = 0;
 
     if (**buf == '(')
     {
@@ -357,6 +356,7 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
             {
                 Curr->type = OP;
                 Curr->data = ADD;
+                flag = 1;
             }
             break;
 
@@ -364,6 +364,7 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
             {
                 Curr->type = OP;
                 Curr->data = SUB;
+                flag = 1;
             }
             break;
 
@@ -371,6 +372,7 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
             {
                 Curr->type = OP;
                 Curr->data = MUL;
+                flag = 1;
             }
             break;
 
@@ -378,6 +380,7 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
             {
                 Curr->type = OP;
                 Curr->data = DIV;
+                flag = 1;
             }
             break;
 
@@ -385,15 +388,21 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
                 ;
         }
 
-        if (isdigit(data[0]))
-        {
-            Curr->type = NUM;
-            Curr->data = atof(data);
-        }
-        else if (isalpha(data[0]))
+        if (isalpha(data[0]) && flag == 0)
         {
             Curr->type = VAR;
-            Curr->data = CountVars++;
+            Curr->data = data[0] - 'x';
+            flag = 1;
+        }
+
+        if (flag == 0)
+        {
+            char *end = data;
+            TreeElem_t temp_val = strtod(data, &end);
+            if (end == data)
+                return NULL;
+            Curr->type = NUM;
+            Curr->data = temp_val;
         }
 
         len = strlen(data);
