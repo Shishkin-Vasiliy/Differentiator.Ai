@@ -26,36 +26,6 @@ TreeNode_t *NewNode(Type_t type, TreeElem_t data, TreeNode_t *left, TreeNode_t *
     return Node;
 }
 
-TreeNode_t *_NUM(TreeElem_t data)
-{
-    return NewNode(NUM, data, NULL, NULL);
-}
-
-TreeNode_t *_VAR(int var_num)
-{
-    return NewNode(VAR, (TreeElem_t)var_num, NULL, NULL);
-}
-
-TreeNode_t *_ADD(TreeNode_t *left, TreeNode_t *right)
-{
-    return NewNode(OP, ADD, left, right); 
-}
-
-TreeNode_t *_SUB(TreeNode_t *left, TreeNode_t *right)
-{
-    return NewNode(OP, SUB, left, right);
-}
-
-TreeNode_t *_MUL(TreeNode_t *left, TreeNode_t *right) 
-{ 
-    return NewNode(OP, MUL, left, right); 
-}
-
-TreeNode_t *_DIV(TreeNode_t *left, TreeNode_t *right)
-{
-    return NewNode(OP, DIV, left, right);
-}
-
 TreeNode_t *FindNode(TreeNode_t *Curr, const char *data)
 {   
     //if (!Curr)
@@ -322,7 +292,7 @@ void DescribeTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
 int LatexDump(Tree_t *Tree, LatexLogCtx_t *LatexLogCtx)
 {
     const int PATH_SIZE = 30;
-    const int COMMAND_SIZE = 80;
+    const int COMMAND_SIZE = 100;
 
     char latex_path[PATH_SIZE] = {};
     char command[COMMAND_SIZE] = {};
@@ -339,7 +309,7 @@ int LatexDump(Tree_t *Tree, LatexLogCtx_t *LatexLogCtx)
     ConstructTex(Tree, latex_fp);
     fclose(latex_fp);
 
-    snprintf(command, COMMAND_SIZE, "pdflatex -output-directory=Log %s", latex_path);
+    snprintf(command, COMMAND_SIZE, "pdflatex -interaction=batchmode -output-directory=Log %s > /dev/null", latex_path);
     system(command);
 
     char *temp = strdup(pdf_path);
@@ -409,12 +379,19 @@ void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
 
                 case DIV:
                 {
-                    fprintf(fp, "\frac{");
+                    fprintf(fp, "\\frac");
                     if (Curr->left)
+                    {
+                        fprintf(fp, "{");
                         PreOrderExpression(Tree, Curr->left, fp);
+                        fprintf(fp, "}");
+                    }
                     if (Curr->right)
+                    {
+                        fprintf(fp, "{");
                         PreOrderExpression(Tree, Curr->right, fp);
-                    fprintf(fp, "}");
+                        fprintf(fp, "}");
+                    }
                 }
                 return;
 
@@ -469,7 +446,7 @@ void InOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
                 {
                     if (Curr->left)
                         InOrderExpression(Tree, Curr->left, fp);
-                    fprintf(fp, "*");
+                    fprintf(fp, "\\cdot");
                     if (Curr->right)
                         InOrderExpression(Tree, Curr->right, fp);
                 }

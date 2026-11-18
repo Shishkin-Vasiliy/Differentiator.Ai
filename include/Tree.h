@@ -71,11 +71,6 @@ TreeErr_t InOrderCtor(Tree_t *Tree, const char *file_name);
 TreeErr_t TreeDtor(Tree_t *Tree);
 TreeErr_t TreeFree(TreeNode_t *Curr);
 
-TreeNode_t *_NUM(TreeElem_t data);
-TreeNode_t *_VAR(int var_num);
-TreeNode_t *_ADD(TreeNode_t *left, TreeNode_t *right);
-TreeNode_t *_MUL(TreeNode_t *left, TreeNode_t *right);
-
 TreeNode_t *NewNode(Type_t type, TreeElem_t data, TreeNode_t *left, TreeNode_t *right);
 
 void PrintPreOrder(TreeNode_t *Node);

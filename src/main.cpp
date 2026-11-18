@@ -14,7 +14,13 @@ int main(void)
 
     PreOrderCtor(&Tree, "preorder.txt");
 
+    Tree_t Tree_1 = {};
+    Tree_1.root = Diff(&Tree, Tree.root);
+
+    PrintPreOrder(Tree_1.root);
+    printf("\n");
     PrintPreOrder(Tree.root);
+    printf("\n");
 
     LatexDump(&Tree, &LatexLogCtx);
     TreeDump(&Tree, &TreeLogCtx);
@@ -22,6 +28,7 @@ int main(void)
     LogDeinit(&TreeLogCtx, &LatexLogCtx);
 
     TreeDtor(&Tree);
+    TreeDtor(&Tree_1);
 
     return 0;
 }
