@@ -4,20 +4,22 @@
 int main(void)
 {
     Tree_t Tree = {};
-    LogCtx_t LogCtx = {};
+    TreeLogCtx_t TreeLogCtx = {};
+    LatexLogCtx_t LatexLogCtx = {};
 
     Tree.VarList[0] = 1;
     Tree.VarList[1] = 6;
 
-    TreeLogInit(&LogCtx);
+    LogInit(&TreeLogCtx, &LatexLogCtx);
 
     PreOrderCtor(&Tree, "preorder.txt");
 
     PrintPreOrder(Tree.root);
 
-    TreeDump(&Tree, &LogCtx);
+    LatexDump(&Tree, &LatexLogCtx);
+    TreeDump(&Tree, &TreeLogCtx);
 
-    TreeLogDeinit(&LogCtx);
+    LogDeinit(&TreeLogCtx, &LatexLogCtx);
 
     TreeDtor(&Tree);
 

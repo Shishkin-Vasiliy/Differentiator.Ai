@@ -53,9 +53,14 @@ enum TreeErr_t {
     TREE_CORRUPTED
 };
 
-struct LogCtx_t {
+struct TreeLogCtx_t {
     char **pict_index;
     size_t num_picts;
+};
+
+struct LatexLogCtx_t {
+    char **pdf_index;
+    size_t num_pdfs;
 };
 
 
@@ -81,12 +86,20 @@ void WritePreOrder(TreeNode_t *Node, FILE *fp);
 void WritePostOrder(TreeNode_t *Node, FILE *fp);
 void WriteInOrder(TreeNode_t *Node, FILE *fp);
 
-int TreeLogInit(LogCtx_t *LogCtx);
-int TreeLogDeinit(LogCtx_t *LogCtx);
+int LogInit(TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx);
+int LogDeinit(TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx);
 
-int TreeDump(Tree_t *Tree, LogCtx_t *LogCtx);
-void DrawTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
-void DescribeTree(Tree_t *Tree, FILE *fp);
+int TreeDump(Tree_t *Tree, TreeLogCtx_t *TreeLogCtx);
+int LatexDump(Tree_t *Tree, LatexLogCtx_t *LatexLogCtx);
+
+void ConstructDot(Tree_t *Tree, FILE *fp);
+void ConstructTex(Tree_t *Tree, FILE *fp);
+
+void DescribeTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
+void DescribeExpression(Tree_t *Tree, FILE *fp);
+
+void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
+void InOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
 
 ssize_t GetFileSize(const char *file_name);
 size_t ReadFromFile(char **buf, const char *file_name);

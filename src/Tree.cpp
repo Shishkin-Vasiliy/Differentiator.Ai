@@ -144,14 +144,15 @@ TreeErr_t TreeFree(TreeNode_t *Curr)
     return TREE_OK;
 }
 
-int TreeLogInit(LogCtx_t *LogCtx)
+int LogInit(TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx)
 {
     const int MAX_PICTS = 16;
-    int DirNotFound = system("[ -d TreeLog ]");
+    const int MAX_PDFS = MAX_PICTS;
+    int DirNotFound = system("[ -d Log ]");
 
     if (DirNotFound)
     {
-        int err = system("mkdir TreeLog");
+        int err = system("mkdir Log");
         if (err)
         {
             return EOF;
@@ -159,26 +160,34 @@ int TreeLogInit(LogCtx_t *LogCtx)
     }
     else 
     {
-        system("rm -f TreeLog/*");
+        system("rm -f Log/*");
     }
 
-    LogCtx->pict_index = (char **)calloc(MAX_PICTS, sizeof(char *));
-    if (!LogCtx->pict_index)
+    TreeLogCtx->pict_index = (char **)calloc(MAX_PICTS, sizeof(char *));
+    if (!TreeLogCtx->pict_index)
+        return EOF;
+
+    LatexLogCtx->pdf_index = (char **)calloc(MAX_PDFS, sizeof(char *));
+    if (!LatexLogCtx->pdf_index)
         return EOF;
 
     return 0;
 }
 
-int TreeLogDeinit(LogCtx_t *LogCtx)
+int LogDeinit(TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx)
 {
-    for (size_t i = 0; i < LogCtx->num_picts; i++)
-        free(LogCtx->pict_index[i]);
-    free(LogCtx->pict_index);
+    for (size_t i = 0; i < TreeLogCtx->num_picts && i < LatexLogCtx->num_pdfs; i++)
+    {
+        free(TreeLogCtx->pict_index[i]);
+        free(LatexLogCtx->pdf_index[i]);
+    }
+    free(TreeLogCtx->pict_index);
+    free(LatexLogCtx->pdf_index);
 
     return 0;
 }
 
-int TreeDump(Tree_t *Tree, LogCtx_t *LogCtx)
+int TreeDump(Tree_t *Tree, TreeLogCtx_t *TreeLogCtx)
 {
     const int PATH_SIZE    = 30;
     const int COMMAND_SIZE = 80;
@@ -187,20 +196,20 @@ int TreeDump(Tree_t *Tree, LogCtx_t *LogCtx)
     char png_path[PATH_SIZE]   = {};
     char command[COMMAND_SIZE] = {};
 
-    size_t num_picts = LogCtx->num_picts;
+    size_t num_picts = TreeLogCtx->num_picts;
 
-    SlowPrintf("Dump processing...\n");
+    SlowPrintf("TreeDump processing...\n");
 
-    snprintf(dot_path, PATH_SIZE, "TreeLog/pict_%lu.dot", num_picts);
+    snprintf(dot_path, PATH_SIZE, "Log/pict_%lu.dot", num_picts);
 
     FILE *dot_fp = fopen(dot_path, "w");
     if (!dot_fp)
         return EOF;
 
-    DescribeTree(Tree, dot_fp);
+    ConstructDot(Tree, dot_fp);
     fclose(dot_fp);
 
-    snprintf(command, COMMAND_SIZE, "dot %s -Tpng -o TreeLog/pict_%lu.png", dot_path, num_picts);
+    snprintf(command, COMMAND_SIZE, "dot %s -Tpng -o Log/pict_%lu.png", dot_path, num_picts);
     system(command);
 
     snprintf(png_path, PATH_SIZE, "pict_%lu.png", num_picts);
@@ -209,15 +218,15 @@ int TreeDump(Tree_t *Tree, LogCtx_t *LogCtx)
     if (!temp)
         return EOF;
 
-    LogCtx->pict_index[num_picts] = temp;
-    LogCtx->num_picts++;
+    TreeLogCtx->pict_index[num_picts] = temp;
+    TreeLogCtx->num_picts++;
 
     SlowPrintf("Dump complete!\n");
 
     return 0;
 }
 
-void DescribeTree(Tree_t *Tree, FILE *fp)
+void ConstructDot(Tree_t *Tree, FILE *fp)
 {
     if (!fp)
         return;
@@ -228,12 +237,12 @@ void DescribeTree(Tree_t *Tree, FILE *fp)
     fprintf(fp, "nodesep=0.8;\n");
     fprintf(fp, "ranksep=0.9;\n");
 
-    DrawTree(Tree, Tree->root, fp);
+    DescribeTree(Tree, Tree->root, fp);
 
     fprintf(fp, "}\n");
 }
 
-void DrawTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
+void DescribeTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
 {  
     if (Curr->type == OP)
     {
@@ -286,9 +295,9 @@ void DrawTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
         fprintf(fp, "{ rank=source; node_%p };\n", Tree->root);
 
     if (Curr->left)
-        DrawTree(Tree, Curr->left, fp);
+        DescribeTree(Tree, Curr->left, fp);
     if (Curr->right)
-        DrawTree(Tree, Curr->right, fp);
+        DescribeTree(Tree, Curr->right, fp);
 
     if (!(Curr->left) && !(Curr->right))
         fprintf(fp, "{ rank=sink; node_%p };\n", Curr);
@@ -308,6 +317,185 @@ void DrawTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
     }
     
     return;
+}
+
+int LatexDump(Tree_t *Tree, LatexLogCtx_t *LatexLogCtx)
+{
+    const int PATH_SIZE = 30;
+    const int COMMAND_SIZE = 80;
+
+    char latex_path[PATH_SIZE] = {};
+    char command[COMMAND_SIZE] = {};
+    char pdf_path[PATH_SIZE]   = {};
+
+    SlowPrintf("LatexDump processing...\n");
+
+    snprintf(latex_path, PATH_SIZE, "Log/texdump_%lu.tex", LatexLogCtx->num_pdfs);
+
+    FILE *latex_fp = fopen(latex_path, "w");
+    if (!latex_fp)
+        return EOF;
+
+    ConstructTex(Tree, latex_fp);
+    fclose(latex_fp);
+
+    snprintf(command, COMMAND_SIZE, "pdflatex -output-directory=Log %s", latex_path);
+    system(command);
+
+    char *temp = strdup(pdf_path);
+    if (!temp)
+        return EOF;
+
+    LatexLogCtx->pdf_index[LatexLogCtx->num_pdfs] = temp;
+    LatexLogCtx->num_pdfs++;
+
+    SlowPrintf("LatexDump complete!\n");
+
+    return 0;
+}
+
+void ConstructTex(Tree_t *Tree, FILE *fp)
+{
+    if (!fp)
+        return;
+
+    fprintf(fp, "\\documentclass[a4paper,12pt]{article}\n");
+    fprintf(fp, "\\usepackage[utf8]{inputenc}\n");
+    fprintf(fp, "\\usepackage{listings}\n");
+    fprintf(fp, "\\usepackage{xcolor}\n");
+    fprintf(fp, "\\usepackage{geometry}\n");
+    fprintf(fp, "\\geometry{margin=2cm}\n\n");
+ 
+    fprintf(fp, "\\begin{document}\n");
+    
+    fprintf(fp, "$");
+    DescribeExpression(Tree, fp);
+    fprintf(fp, "$");
+    
+    fprintf(fp, "\\end{document}\n");
+
+    fprintf(fp, "\\end{document}\n");
+}
+
+void DescribeExpression(Tree_t *Tree, FILE *fp)
+{
+    Operator_t root_op = (Operator_t)Tree->root->data;
+
+    if (root_op == DIV)
+        PreOrderExpression(Tree, Tree->root, fp);
+    else 
+        InOrderExpression(Tree, Tree->root, fp);
+}
+
+void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
+{
+    switch(Curr->type)
+    {
+        case OP:
+        {
+            switch((Operator_t)Curr->data)
+            {
+                case ADD:
+                    InOrderExpression(Tree, Curr, fp);
+                return;
+                
+                case SUB:
+                    InOrderExpression(Tree, Curr, fp);
+                return;
+
+                case MUL:
+                    InOrderExpression(Tree, Curr, fp);
+                return;
+
+                case DIV:
+                {
+                    fprintf(fp, "\frac{");
+                    if (Curr->left)
+                        PreOrderExpression(Tree, Curr->left, fp);
+                    if (Curr->right)
+                        PreOrderExpression(Tree, Curr->right, fp);
+                    fprintf(fp, "}");
+                }
+                return;
+
+                default:
+                    ;
+            }
+        }
+        return;
+
+        case NUM:
+            fprintf(fp, "{%lg}", Curr->data);
+        return;
+
+        case VAR:
+            fprintf(fp, "{%c}", 'x' + (int)Curr->data);
+        return;
+
+        default:
+            ;
+    }
+}
+
+void InOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
+{
+    switch(Curr->type)
+    {
+        case OP:
+        {
+            switch((Operator_t)Curr->data)
+            {
+                case ADD:
+                {
+                    if (Curr->left)
+                        InOrderExpression(Tree, Curr->left, fp);
+                    fprintf(fp, "+");
+                    if (Curr->right)
+                        InOrderExpression(Tree, Curr->right, fp);
+                }
+                return;
+
+                case SUB:
+                {
+                    if (Curr->left)
+                        InOrderExpression(Tree, Curr->left, fp);
+                    fprintf(fp, "-");
+                    if (Curr->right)
+                        InOrderExpression(Tree, Curr->right, fp);
+                }
+                return;
+
+                case MUL:
+                {
+                    if (Curr->left)
+                        InOrderExpression(Tree, Curr->left, fp);
+                    fprintf(fp, "*");
+                    if (Curr->right)
+                        InOrderExpression(Tree, Curr->right, fp);
+                }
+                return;
+
+                case DIV:
+                    PreOrderExpression(Tree, Curr, fp);
+                return;
+
+                default:
+                    ;
+            }
+        }
+        return;
+
+        case NUM:
+            fprintf(fp, "{%lg}", Curr->data);
+        return;
+
+        case VAR:
+            fprintf(fp, "{%c}", 'x' + (int)Curr->data);
+        return;
+
+        default:
+            ;
+    }
 }
 
 ssize_t GetFileSize(const char *file_name)
