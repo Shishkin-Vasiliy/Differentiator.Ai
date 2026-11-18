@@ -41,6 +41,7 @@ struct TreeNode_t {
 
 struct Tree_t {
     TreeNode_t *root;
+    TreeElem_t VarList[MAX_VARS];
 };
 
 enum TreeErr_t {

@@ -28,7 +28,7 @@ node_0x504000000150 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor
 edge [color="#FFFFFF"];
 node_0x504000000110:sw -> node_0x504000000150:n [color="#228B22"]
 ;node_0x504000000190 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
-       label="  { VAR | 2 }"];
+       label="  { NUM | 8 }"];
 { rank=sink; node_0x504000000190 };
 edge [color="#FFFFFF"];
 node_0x504000000110:se -> node_0x504000000190:n [color="#228B22"]

@@ -1,10 +1,5 @@
 #include "Tree.h"
 
-static TreeElem_t VarList[MAX_VARS] = {
-    0,
-    5
-};
-
 TreeErr_t PreOrderCtor(Tree_t *Tree, const char *file_name)
 {
     char *buf = NULL;
@@ -46,9 +41,19 @@ TreeNode_t *_ADD(TreeNode_t *left, TreeNode_t *right)
     return NewNode(OP, ADD, left, right); 
 }
 
+TreeNode_t *_SUB(TreeNode_t *left, TreeNode_t *right)
+{
+    return NewNode(OP, SUB, left, right);
+}
+
 TreeNode_t *_MUL(TreeNode_t *left, TreeNode_t *right) 
 { 
     return NewNode(OP, MUL, left, right); 
+}
+
+TreeNode_t *_DIV(TreeNode_t *left, TreeNode_t *right)
+{
+    return NewNode(OP, DIV, left, right);
 }
 
 TreeNode_t *FindNode(TreeNode_t *Curr, const char *data)
