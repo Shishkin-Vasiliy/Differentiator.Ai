@@ -8,6 +8,9 @@ TreeErr_t PreOrderCtor(Tree_t *Tree, const char *file_name)
     char *temp = buf;
     BuildFromPreOrder(Tree, Tree->root, &temp);
 
+    for (size_t i = 0; i < MAX_VARS; i++)
+        Tree->VarList[i] = POIZON_VAL;
+
     free(buf);
 
     return TREE_OK;
@@ -69,6 +72,15 @@ void PrintPreOrder(TreeNode_t *Node)
                     break;
                 case DIV:
                     printf("/");
+                    break;
+                case SIN:
+                    printf("sin");
+                    break;
+                case COS:
+                    printf("cos");
+                    break;
+                case LOG:
+                    printf("log");
                     break;
             }
         }
@@ -246,6 +258,27 @@ void DescribeTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
             }
             break;
 
+            case SIN:
+            {
+                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+                fprintf(fp, "       label=\"  { OP | SIN }\"];\n");
+            }
+            break;
+
+            case COS:
+            {
+                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+                fprintf(fp, "       label=\"  { OP | COS }\"];\n");
+            }
+            break;
+
+            case LOG:
+            {
+                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+                fprintf(fp, "       label=\"  { OP | LOG }\"];\n");
+            }
+            break;
+
             default:
                 ;
         }
@@ -395,6 +428,42 @@ void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
                 }
                 return;
 
+                case SIN:
+                {
+                    fprintf(fp, "\\sin");
+                    if (Curr->left)
+                    {
+                        fprintf(fp, "(");
+                        PreOrderExpression(Tree, Curr->left, fp);
+                        fprintf(fp, ")");
+                    } 
+                }
+                return;
+
+                case COS:
+                {
+                    fprintf(fp, "\\cos");
+                    if (Curr->left)
+                    {
+                        fprintf(fp, "(");
+                        PreOrderExpression(Tree, Curr->left, fp);
+                        fprintf(fp, ")");
+                    } 
+                }
+                return;
+
+                case LOG:
+                {
+                    fprintf(fp, "\\log");
+                    if (Curr->left)
+                    {
+                        fprintf(fp, "(");
+                        PreOrderExpression(Tree, Curr->left, fp);
+                        fprintf(fp, ")");
+                    } 
+                }
+                return;
+
                 default:
                     ;
             }
@@ -453,6 +522,18 @@ void InOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
                 return;
 
                 case DIV:
+                    PreOrderExpression(Tree, Curr, fp);
+                return;
+
+                case SIN:
+                    PreOrderExpression(Tree, Curr, fp);
+                return;
+
+                case COS:
+                    PreOrderExpression(Tree, Curr, fp);
+                return;
+
+                case LOG:
                     PreOrderExpression(Tree, Curr, fp);
                 return;
 
@@ -560,6 +641,28 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
 
         if (isalpha(data[0]) && flag == 0)
         {
+            if (strcmp(data, "sin") == 0)
+            {
+                Curr->type = OP;
+                Curr->data = SIN;
+                flag = 1;
+            }
+            else if (strcmp(data, "cos") == 0)
+            {
+                Curr->type = OP;
+                Curr->data = COS;
+                flag = 1;
+            }
+            else if (strcmp(data, "log") == 0)
+            {
+                Curr->type = OP;
+                Curr->data = LOG;
+                flag = 1;
+            }
+        }
+
+        if (isalpha(data[0]) && flag == 0)
+        {
             Curr->type = VAR;
             Curr->data = data[0] - 'x';
             flag = 1;
@@ -577,7 +680,6 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
 
         len = strlen(data);
         (*buf) += len;
-            
     }
     else
     {

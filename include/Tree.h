@@ -15,7 +15,7 @@ typedef double TreeElem_t;
 const TreeElem_t POIZON_VAL = 0x0D01B0EB;
 
 const int DATA_SIZE = 64;
-const int MAX_VARS = 2;
+const int MAX_VARS = 3;
 
 enum Type_t {
     OP,
@@ -28,7 +28,10 @@ enum Operator_t {
     ADD,
     SUB,
     MUL,
-    DIV
+    DIV,
+    SIN,
+    COS,
+    LOG
 };
 
 struct TreeNode_t {

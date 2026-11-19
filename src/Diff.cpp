@@ -26,6 +26,15 @@ TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr)
 
                     return Calc(Tree, Curr->left) / op2;
                 }
+
+                case SIN:
+                    return sin(Calc(Tree, Curr->left));
+
+                case COS:
+                    return cos(Calc(Tree, Curr->left));
+
+                case LOG:
+                    return log(Calc(Tree, Curr->left));
                 
                 default:
                     ;
@@ -120,6 +129,21 @@ TreeNode_t *_MUL(TreeNode_t *left, TreeNode_t *right)
 TreeNode_t *_DIV(TreeNode_t *left, TreeNode_t *right)
 {
     return NewNode(OP, DIV, left, right);
+}
+
+TreeNode_t *_SIN(TreeNode_t *left)
+{
+    return NewNode(OP, SIN, left, NULL);
+}
+
+TreeNode_t *_COS(TreeNode_t *left)
+{
+    return NewNode(OP, COS, left, NULL);
+}
+
+TreeNode_t *_LOG(TreeNode_t *left)
+{
+    return NewNode(OP, LOG, left, NULL);
 }
 
 TreeNode_t *Copy(TreeNode_t *Curr)

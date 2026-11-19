@@ -14,6 +14,9 @@ TreeNode_t *_ADD(TreeNode_t *left, TreeNode_t *right);
 TreeNode_t *_SUB(TreeNode_t *left, TreeNode_t *right);
 TreeNode_t *_MUL(TreeNode_t *left, TreeNode_t *right);
 TreeNode_t *_DIV(TreeNode_t *left, TreeNode_t *right);
+TreeNode_t *_SIN(TreeNode_t *left);
+TreeNode_t *_COS(TreeNode_t *left);
+TreeNode_t *_LOG(TreeNode_t *left);
 
 #define _DL Diff(Tree, Curr->left)
 #define _DR Diff(Tree, Curr->right)

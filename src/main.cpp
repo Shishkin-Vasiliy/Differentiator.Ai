@@ -7,12 +7,14 @@ int main(void)
     TreeLogCtx_t TreeLogCtx = {};
     LatexLogCtx_t LatexLogCtx = {};
 
+    
+    LogInit(&TreeLogCtx, &LatexLogCtx);
+    
+    PreOrderCtor(&Tree, "preorder.txt");
+    
     Tree.VarList[0] = 1;
     Tree.VarList[1] = 6;
-
-    LogInit(&TreeLogCtx, &LatexLogCtx);
-
-    PreOrderCtor(&Tree, "preorder.txt");
+    Tree.VarList[2] = -5;
 
     Tree_t Tree_1 = {};
     Tree_1.root = Diff(&Tree, Tree.root);
@@ -21,7 +23,7 @@ int main(void)
     printf("\n");
     PrintPreOrder(Tree.root);
     printf("\n");
-
+    
     LatexDump(&Tree, &LatexLogCtx);
     TreeDump(&Tree, &TreeLogCtx);
 
