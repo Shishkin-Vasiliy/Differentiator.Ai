@@ -1,4 +1,5 @@
 #include "Tree.h"
+#include "Diff.h"
 
 TreeErr_t PreOrderCtor(Tree_t *Tree, const char *file_name)
 {
@@ -203,7 +204,7 @@ int TreeDump(Tree_t *Tree, TreeLogCtx_t *TreeLogCtx)
     TreeLogCtx->pict_index[num_picts] = temp;
     TreeLogCtx->num_picts++;
 
-    SlowPrintf("Dump complete!\n");
+    SlowPrintf("TreeDump complete!\n");
 
     return 0;
 }
@@ -362,20 +363,63 @@ void ConstructTex(Tree_t *Tree, FILE *fp)
     if (!fp)
         return;
 
+    TreeElem_t result = Calc(Tree, Tree->root);
+
     fprintf(fp, "\\documentclass[a4paper,12pt]{article}\n");
     fprintf(fp, "\\usepackage[utf8]{inputenc}\n");
     fprintf(fp, "\\usepackage{listings}\n");
     fprintf(fp, "\\usepackage{xcolor}\n");
+    fprintf(fp, "\\usepackage{float}\n");
+    fprintf(fp, "\\usepackage{graphicx}\n");
     fprintf(fp, "\\usepackage{geometry}\n");
     fprintf(fp, "\\geometry{margin=2cm}\n\n");
- 
-    fprintf(fp, "\\begin{document}\n");
-    
+
+    fprintf(fp, "\\newcommand{\\photoPlaceholder}[3]{%%\n");
+    fprintf(fp, "\\begin{figure}[H]\n");
+    fprintf(fp, "    \\centering\n");
+    fprintf(fp, "    \\includegraphics[height=#1, keepaspectratio]{#3}\n");
+    fprintf(fp, "    \\caption{deepsek}\n");
+    fprintf(fp, "\\end{figure}}\n\n");
+
+    fprintf(fp, "\\begin{document}\n\n");
+
+    fprintf(fp, "\\begin{center}\n");
+    fprintf(fp, "\\small\n");
+    fprintf(fp, "Ministerstvo nauki i vysshego obrazovaniya Rossiyskoy Federatsii\\\\[2mm]\n");
+    fprintf(fp, "\\textbf{FEDERALNOE GOSUDARSTVENNOE AVTONOMNOE\n");
+    fprintf(fp, "OBRAZOVATELNOE UCHREZHDENIE VYSSHEGO OBRAZOVANIYA}\\\\[1mm]\n");
+    fprintf(fp, "<<MOSKOVSKIY FIZIKO-TEKHNICHESKIY INSTITUT\\\\\n");
+    fprintf(fp, "(NATSIONALNYY ISSLEDOVATELSKIY UNIVERSITET)>>\\\\\n");
+    fprintf(fp, "(MFTI, Fiztekh)\n");
+    fprintf(fp, "\\end{center}\n\n");
+
+    fprintf(fp, "\\photoPlaceholder{7cm}{legenda}{./images/zhdan.png}\n\n");
+
+    fprintf(fp, "\\begin{center}\n");
+    fprintf(fp, "\\Huge \\textbf{MATANALIZ}\\\\[10mm]\n"); 
+    fprintf(fp, "\\Huge \\textbf{Seminar 777}\n");
+    fprintf(fp, "\\end{center}\n");
+
+    fprintf(fp, "\\newpage\n");
+
+    fprintf(fp, "Vot reshenie kotoroe privel deepseek\n");
+
+    fprintf(fp, "\\photoPlaceholder{10cm}{Reshenie primera}{./images/solution_%d.png}\n\n", 0);
+
+    fprintf(fp, "chto concretno ne ponyatno?\n\n");
     fprintf(fp, "$");
     DescribeExpression(Tree, fp);
+    fprintf(fp, "=");
+    fprintf(fp, "%lg", result);
     fprintf(fp, "$");
-    
-    fprintf(fp, "\\end{document}\n");
+
+    fprintf(fp, "\\begin{center}\n");
+    fprintf(fp, "\\Huge \\textbf{Rebyat, Pereryv}\n");
+    fprintf(fp, "\\end{center}\n");
+
+    fprintf(fp, "\\begin{center}\n");
+    fprintf(fp, "\\small Dolgoprudnyy, \\the\\year{}~g.\n");
+    fprintf(fp, "\\end{center}\n\n");
 
     fprintf(fp, "\\end{document}\n");
 }
@@ -389,7 +433,7 @@ void DescribeExpression(Tree_t *Tree, FILE *fp)
     else 
         InOrderExpression(Tree, Tree->root, fp);
 }
-
+ 
 void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
 {
     switch(Curr->type)
