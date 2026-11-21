@@ -30,20 +30,18 @@ TreeNode_t *NewNode(Type_t type, TreeElem_t data, TreeNode_t *left, TreeNode_t *
     return Node;
 }
 
-TreeNode_t *FindNode(TreeNode_t *Curr, const char *data)
-{   
-    //if (!Curr)
-    //    return NULL;
-//
-    //if (strcmp(Curr->data, data) == 0)
-    //    return Curr;
-//
-    //else if (strcmp(Curr->data, data) > 0 && Curr->left)
-    //    return FindNode(Curr->left, data);
-//
-    //else
-    //    return FindNode(Curr->right, data);
-}
+typedef void (*PrintOperator_t)(void);
+
+static PrintOperator_t PrintOperatorTable[] = {
+    print_ADD,
+    print_SUB,
+    print_MUL,
+    print_DIV,
+    print_POW,
+    print_SIN,
+    print_COS,
+    print_LOG
+};
 
 void PrintPreOrder(TreeNode_t *Node)
 {
@@ -59,36 +57,14 @@ void PrintPreOrder(TreeNode_t *Node)
             break;
         
         case OP:
-        {
-            switch((Operator_t)Node->data)
-            {
-                case ADD:
-                    printf("+");
-                    break;
-                case SUB:
-                    printf("-");
-                    break;
-                case MUL:
-                    printf("*");
-                    break;
-                case DIV:
-                    printf("/");
-                    break;
-                case SIN:
-                    printf("sin");
-                    break;
-                case COS:
-                    printf("cos");
-                    break;
-                case LOG:
-                    printf("log");
-                    break;
-            }
-        }
+            PrintOperatorTable[(Operator_t)Node->data]();
         break;
         
         case VAR:
             printf("%c", 'x' + (int)Node->data);
+        break;
+
+        case UNKNOWN_TYPE:
         break;
 
         default:
@@ -159,11 +135,10 @@ int LogInit(TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx)
 
 int LogDeinit(TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx)
 {
-    for (size_t i = 0; i < TreeLogCtx->num_picts && i < LatexLogCtx->num_pdfs; i++)
-    {
+    for (size_t i = 0; i < TreeLogCtx->num_picts; i++)
         free(TreeLogCtx->pict_index[i]);
+    for (size_t i = 0; i < LatexLogCtx->num_pdfs; i++)
         free(LatexLogCtx->pdf_index[i]);
-    }
     free(TreeLogCtx->pict_index);
     free(LatexLogCtx->pdf_index);
 
@@ -225,65 +200,31 @@ void ConstructDot(Tree_t *Tree, FILE *fp)
     fprintf(fp, "}\n");
 }
 
+
+typedef void (*DotOperator_t)(TreeNode_t *Curr, FILE *fp);
+
+static DotOperator_t DotOperatorTable[] = {
+    dot_ADD,
+    dot_SUB,
+    dot_MUL,
+    dot_DIV,
+    dot_POW,
+    dot_SIN,
+    dot_COS,
+    dot_LOG
+};  
+
 void DescribeTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
-{  
+{
+    DescribeNodes(Tree, Curr, fp);
+    DescribeEdges(Tree, Curr, fp);
+}
+
+void DescribeNodes(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
+{
     if (Curr->type == OP)
-    {
-        switch((Operator_t)Curr->data)
-        {
-            case ADD:
-            {
-                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-                fprintf(fp, "       label=\"  { OP | ADD }\"];\n");
-            }
-            break;
+        DotOperatorTable[(Operator_t)Curr->data](Curr, fp);
 
-            case SUB:
-            {
-                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-                fprintf(fp, "       label=\"  { OP | SUB }\"];\n");
-            }
-            break;
-
-            case MUL:
-            {
-                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-                fprintf(fp, "       label=\"  { OP | MUL }\"];\n");
-            }
-            break;
-
-            case DIV:
-            {
-                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-                fprintf(fp, "       label=\"  { OP | DIV }\"];\n");
-            }
-            break;
-
-            case SIN:
-            {
-                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-                fprintf(fp, "       label=\"  { OP | SIN }\"];\n");
-            }
-            break;
-
-            case COS:
-            {
-                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-                fprintf(fp, "       label=\"  { OP | COS }\"];\n");
-            }
-            break;
-
-            case LOG:
-            {
-                fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-                fprintf(fp, "       label=\"  { OP | LOG }\"];\n");
-            }
-            break;
-
-            default:
-                ;
-        }
-    }
     else if (Curr->type == NUM)
     {
         fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
@@ -292,35 +233,41 @@ void DescribeTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
     else
     {
         fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-        fprintf(fp, "       label=\"  { VAR | %lg }\"];\n", Curr->data);
+        fprintf(fp, "       label=\"  { VAR | %d }\"];\n", (int)Curr->data);
     }
 
     if (Curr == Tree->root)
         fprintf(fp, "{ rank=source; node_%p };\n", Tree->root);
 
     if (Curr->left)
-        DescribeTree(Tree, Curr->left, fp);
+        DescribeNodes(Tree, Curr->left, fp);
     if (Curr->right)
-        DescribeTree(Tree, Curr->right, fp);
+        DescribeNodes(Tree, Curr->right, fp);
 
     if (!(Curr->left) && !(Curr->right))
         fprintf(fp, "{ rank=sink; node_%p };\n", Curr);
-    
-    if (Curr != Tree->root)
+}
+
+void DescribeEdges(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
+{
+    if (Curr->type == NUM || Curr->type == VAR)
+        return;
+
+    if (Curr->left)
     {
-        if (Curr == Curr->parent->left)
-        {
-            fprintf(fp, "edge [color=\"#FFFFFF\"];\n");
-            fprintf(fp, "node_%p:sw -> node_%p:n [color=\"#228B22\"]\n;", Curr->parent, Curr);
-        }
-        else if (Curr == Curr->parent->right)
-        {
-            fprintf(fp, "edge [color=\"#FFFFFF\"];\n");
-            fprintf(fp, "node_%p:se -> node_%p:n [color=\"#228B22\"]\n;", Curr->parent, Curr);
-        }
+        fprintf(fp, "edge [color=\"#FFFFFF\"];\n");
+        fprintf(fp, "node_%p:sw -> node_%p:n [color=\"#228B22\"];\n", Curr, Curr->left);
     }
-    
-    return;
+    if (Curr->right)
+    {
+        fprintf(fp, "edge [color=\"#FFFFFF\"];\n");
+        fprintf(fp, "node_%p:se -> node_%p:n [color=\"#228B22\"];\n", Curr, Curr->right);       
+    }
+ 
+    if (Curr->left)
+        DescribeEdges(Tree, Curr->left, fp);
+    if (Curr->right)
+        DescribeEdges(Tree, Curr->right, fp);
 }
 
 int LatexDump(Tree_t *Tree, LatexLogCtx_t *LatexLogCtx)
@@ -363,8 +310,17 @@ void ConstructTex(Tree_t *Tree, FILE *fp)
     if (!fp)
         return;
 
-    TreeElem_t result = Calc(Tree, Tree->root);
+    TexBeginning(fp);
 
+    fprintf(fp, "$");
+    DescribeExpression(Tree, fp);
+    fprintf(fp, "$");
+
+    TexEnding(fp);
+}
+
+void TexBeginning(FILE *fp)
+{
     fprintf(fp, "\\documentclass[a4paper,12pt]{article}\n");
     fprintf(fp, "\\usepackage[utf8]{inputenc}\n");
     fprintf(fp, "\\usepackage{listings}\n");
@@ -407,12 +363,10 @@ void ConstructTex(Tree_t *Tree, FILE *fp)
     fprintf(fp, "\\photoPlaceholder{10cm}{Reshenie primera}{./images/solution_%d.png}\n\n", 0);
 
     fprintf(fp, "chto concretno ne ponyatno?\n\n");
-    fprintf(fp, "$");
-    DescribeExpression(Tree, fp);
-    fprintf(fp, "=");
-    fprintf(fp, "%lg", result);
-    fprintf(fp, "$");
+}
 
+void TexEnding(FILE *fp)
+{
     fprintf(fp, "\\begin{center}\n");
     fprintf(fp, "\\Huge \\textbf{Rebyat, Pereryv}\n");
     fprintf(fp, "\\end{center}\n");
@@ -428,7 +382,7 @@ void DescribeExpression(Tree_t *Tree, FILE *fp)
 {
     Operator_t root_op = (Operator_t)Tree->root->data;
 
-    if (root_op == DIV)
+    if (root_op == DIV || root_op == SIN || root_op == COS || root_op == LOG)
         PreOrderExpression(Tree, Tree->root, fp);
     else 
         InOrderExpression(Tree, Tree->root, fp);
@@ -470,6 +424,10 @@ void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
                         fprintf(fp, "}");
                     }
                 }
+                return;
+
+                case POW:
+                    InOrderExpression(Tree, Curr, fp);
                 return;
 
                 case SIN:
@@ -522,6 +480,9 @@ void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
             fprintf(fp, "{%c}", 'x' + (int)Curr->data);
         return;
 
+        case UNKNOWN_TYPE:
+        break;
+
         default:
             ;
     }
@@ -538,35 +499,75 @@ void InOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
                 case ADD:
                 {
                     if (Curr->left)
+                    {
+                        fprintf(fp, "(");
                         InOrderExpression(Tree, Curr->left, fp);
+                        fprintf(fp, ")");
+                    }
                     fprintf(fp, "+");
                     if (Curr->right)
+                    {
+                        fprintf(fp, "(");
                         InOrderExpression(Tree, Curr->right, fp);
+                        fprintf(fp, ")");
+                    }
                 }
                 return;
 
                 case SUB:
                 {
                     if (Curr->left)
+                    {
+                        fprintf(fp, "(");
                         InOrderExpression(Tree, Curr->left, fp);
+                        fprintf(fp, ")");
+                    }
                     fprintf(fp, "-");
                     if (Curr->right)
+                    {
+                        fprintf(fp, "(");
                         InOrderExpression(Tree, Curr->right, fp);
+                        fprintf(fp, ")");
+                    }
                 }
                 return;
 
                 case MUL:
                 {
                     if (Curr->left)
+                    {
+                        fprintf(fp, "(");
                         InOrderExpression(Tree, Curr->left, fp);
+                        fprintf(fp, ")");
+                    }
                     fprintf(fp, "\\cdot");
                     if (Curr->right)
+                    {
+                        fprintf(fp, "(");
                         InOrderExpression(Tree, Curr->right, fp);
+                        fprintf(fp, ")");
+                    }
                 }
                 return;
 
                 case DIV:
                     PreOrderExpression(Tree, Curr, fp);
+                return;
+
+                case POW:
+                    if (Curr->left)
+                    {
+                        fprintf(fp, "{");
+                        InOrderExpression(Tree, Curr->left, fp);
+                        fprintf(fp, "}");
+                    }
+                    fprintf(fp, "^");
+                    if (Curr->right)
+                    {
+                        fprintf(fp, "{");
+                        InOrderExpression(Tree, Curr->right, fp);
+                        fprintf(fp, "}");
+                    }
                 return;
 
                 case SIN:
@@ -594,6 +595,9 @@ void InOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
         case VAR:
             fprintf(fp, "{%c}", 'x' + (int)Curr->data);
         return;
+
+        case UNKNOWN_TYPE:
+        break;
 
         default:
             ;
@@ -679,6 +683,14 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
             }
             break;
 
+            case '^':
+            {
+                Curr->type = OP;
+                Curr->data = POW;
+                flag = 1;
+            }
+            break;
+
             default:
                 ;
         }
@@ -732,11 +744,7 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
     }
 
     if (**buf == '(')
-    {
         Curr->left = BuildFromPreOrder(Tree, Curr->left, buf);
-        if (Curr->left)
-            Curr->left->parent = Curr;
-    }
 
     if (**buf == ')')
     {
@@ -745,11 +753,7 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
     }
 
     if (**buf == '(')
-    {
         Curr->right = BuildFromPreOrder(Tree, Curr->right, buf);
-        if (Curr->right)
-            Curr->right->parent = Curr;
-    }
 
     if (**buf == ')')
     {
@@ -781,4 +785,61 @@ void SlowPrintf(const char *fmt, ...)
 
         usleep(SLEEP_TIME);
     }
+}
+
+void print_ADD(void) { printf("+"); }
+void print_SUB(void) { printf("-"); }
+void print_MUL(void) { printf("*"); }
+void print_DIV(void) { printf("/"); }
+void print_POW(void) { printf("^"); }
+void print_SIN(void) { printf("sin"); }
+void print_COS(void) { printf("cos"); }
+void print_LOG(void) { printf("log"); }
+
+void dot_ADD(TreeNode_t *Curr, FILE *fp) 
+{
+    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+    fprintf(fp, "       label=\"  { OP | ADD }\"];\n");
+}
+
+void dot_SUB(TreeNode_t *Curr, FILE *fp) 
+{
+    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+    fprintf(fp, "       label=\"  { OP | SUB }\"];\n");
+}
+
+void dot_MUL(TreeNode_t *Curr, FILE *fp) 
+{
+    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+    fprintf(fp, "       label=\"  { OP | MUL }\"];\n");
+}
+
+void dot_DIV(TreeNode_t *Curr, FILE *fp) 
+{
+    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+    fprintf(fp, "       label=\"  { OP | DIV }\"];\n");
+}
+
+void dot_POW(TreeNode_t *Curr, FILE *fp) 
+{
+    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+    fprintf(fp, "       label=\"  { OP | POW }\"];\n");
+}
+
+void dot_SIN(TreeNode_t *Curr, FILE *fp) 
+{
+    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+    fprintf(fp, "       label=\"  { OP | SIN }\"];\n");
+}
+
+void dot_COS(TreeNode_t *Curr, FILE *fp) 
+{
+    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+    fprintf(fp, "       label=\"  { OP | COS }\"];\n");
+}
+
+void dot_LOG(TreeNode_t *Curr, FILE *fp) 
+{
+    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
+    fprintf(fp, "       label=\"  { OP | LOG }\"];\n");
 }

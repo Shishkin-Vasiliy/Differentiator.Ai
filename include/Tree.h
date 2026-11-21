@@ -29,6 +29,7 @@ enum Operator_t {
     SUB,
     MUL,
     DIV,
+    POW,
     SIN,
     COS,
     LOG
@@ -39,7 +40,6 @@ struct TreeNode_t {
     TreeElem_t data;
     TreeNode_t *left;
     TreeNode_t *right;
-    TreeNode_t *parent;
 };
 
 struct Tree_t {
@@ -65,7 +65,6 @@ struct LatexLogCtx_t {
     char **pdf_index;
     size_t num_pdfs;
 };
-
 
 TreeErr_t PreOrderCtor(Tree_t *Tree, const char *file_name);
 TreeErr_t PostOrderCtor(Tree_t *Tree, const char *file_name);
@@ -95,6 +94,11 @@ void ConstructTex(Tree_t *Tree, FILE *fp);
 
 void DescribeTree(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
 void DescribeExpression(Tree_t *Tree, FILE *fp);
+void DescribeNodes(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
+void DescribeEdges(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
+
+void TexBeginning(FILE *fp);
+void TexEnding(FILE *fp);
 
 void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
 void InOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp);
@@ -106,8 +110,24 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf);
 TreeNode_t *BuildFromPostOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf);
 TreeNode_t *BuildFromInOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf);
 
-TreeNode_t *FindNode(TreeNode_t *Curr, const char *data);
-
 void SlowPrintf(const char *fmt, ...);
+
+void print_ADD(void);
+void print_SUB(void);
+void print_MUL(void);
+void print_DIV(void);
+void print_POW(void);
+void print_SIN(void);
+void print_COS(void);
+void print_LOG(void);
+
+void dot_ADD(TreeNode_t *Curr, FILE *fp);
+void dot_SUB(TreeNode_t *Curr, FILE *fp);
+void dot_MUL(TreeNode_t *Curr, FILE *fp);
+void dot_DIV(TreeNode_t *Curr, FILE *fp);
+void dot_POW(TreeNode_t *Curr, FILE *fp);
+void dot_SIN(TreeNode_t *Curr, FILE *fp);
+void dot_COS(TreeNode_t *Curr, FILE *fp);
+void dot_LOG(TreeNode_t *Curr, FILE *fp);
 
 #endif

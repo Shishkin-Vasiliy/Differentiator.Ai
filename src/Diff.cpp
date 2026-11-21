@@ -1,163 +1,359 @@
 #include "Tree.h"
 #include "Diff.h"
 
+void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx)
+{
+    const int MAX_LENGTH = 1000;
+    char buf[MAX_LENGTH] = {};
+    int calc_flag = 0;
+    int diff_flag = 0;
+
+    Greet();
+  
+    while(1)
+    {
+        calc_flag = 0;
+        diff_flag = 0;
+
+        SlowPrintf("Enter an expression: ");
+
+        ////// здесь будет функция запроса ввода выражения и получения выражения GetExpression()
+        scanf("%s", buf);
+        ClearBuf();
+        printf("\n");
+        Problem_t *Problem = NULL;
+        Problem = (Problem_t *)calloc(1, sizeof(Problem_t));
+        Tree_t *ExprTree = (Tree_t *)calloc(1, sizeof(Tree_t));
+        Problem->Expression = ExprTree;
+
+        for (size_t i = 0; i < MAX_VARS; i++)
+            ExprTree->VarList[i] = POZION_VAL;
+
+        char *temp = buf;
+        BuildFromPreOrder(ExprTree, ExprTree->root, &temp);
+        DiffCtx->ProblemTable[DiffCtx->num_problems] = Problem;
+        //////
+
+        int num_flags = SelectOption(&calc_flag, &diff_flag);
+        if (num_flags == 0)
+            return;
+
+        int count_vars = FindVariables(ExprTree, ExprTree->root);
+
+        if (calc_flag) 
+        {
+            if (count_vars != 0)
+                GetVars(ExprTree);
+            Problem->ExpressionVal = Calc(ExprTree, ExprTree->root);
+        } 
+
+        if (diff_flag)
+            Problem->Derivative->root = Diff(ExprTree, ExprTree->root);
+
+        DiffCtx->num_problems++;
+        break;
+    }
+}
+
+typedef TreeElem_t (*CalcCase_t)(Tree_t *Tree, TreeNode_t *Curr);
+
+static CalcCase_t CalcCaseTable[] = {
+    calc_ADD,
+    calc_SUB,
+    calc_MUL,
+    calc_DIV,
+    calc_POW,
+    calc_SIN,
+    calc_COS,
+    calc_LOG
+};
+
 TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr)
 {
     switch(Curr->type)
     {
         case OP:
-        {
-            switch((Operator_t)Curr->data)
-            {
-                case ADD:
-                    return Calc(Tree, Curr->left) + Calc(Tree, Curr->right);
-                    
-                case SUB:
-                    return Calc(Tree, Curr->left) - Calc(Tree, Curr->right);
-
-                case MUL:
-                    return Calc(Tree, Curr->left) * Calc(Tree, Curr->right);
-
-                case DIV:
-                {
-                    TreeElem_t op2 = Calc(Tree, Curr->right);
-                    if (DblCmp(op2, 0) == 0)
-                        break;
-
-                    return Calc(Tree, Curr->left) / op2;
-                }
-
-                case SIN:
-                    return sin(Calc(Tree, Curr->left));
-
-                case COS:
-                    return cos(Calc(Tree, Curr->left));
-
-                case LOG:
-                    return log(Calc(Tree, Curr->left));
-                
-                default:
-                    ;
-            }
-        }
-        break;
-
+        return CalcCaseTable[(Operator_t)Curr->data](Tree, Curr);
+        
         case NUM:
-            return Curr->data;
+        return Curr->data;
         
         case VAR:
-            return Tree->VarList[(int)Curr->data];
-
+        return Tree->VarList[(int)Curr->data];
+        
+        case UNKNOWN_TYPE:
+        return ERROR_VAL;
+        
         default:
-            return ERROR_VAL;
+        return ERROR_VAL;
     }
 }
+
+typedef TreeNode_t* (*ComplexDiffCase_t)(Tree_t *Tree, const TreeNode_t *Curr);
+
+static const ComplexDiffCase_t ComplexDiffTable[] = {
+    diff_ADD,
+    diff_SUB,
+    diff_MUL,
+    diff_DIV,
+    diff_POW,
+    diff_SIN,
+    diff_COS,
+    diff_LOG
+};
 
 TreeNode_t *Diff(Tree_t *Tree, const TreeNode_t *Curr)
 {
     switch(Curr->type)
     {
         case OP:
-        {
-            switch((Operator_t)Curr->data)
-            {
-                case ADD:
-                    return _ADD(_DL, _DR);
-                
-                case SUB:
-                    return _SUB(_DL, _DR);
-
-                case MUL:
-                    return _ADD(_MUL(_DL, _CR), _MUL(_CL, _DR));
-
-                case DIV:
-                    return _DIV(_SUB(_MUL(_DL, _CR), _MUL(_CL, _DR)), _MUL(_CR, _CR)); 
-
-                default:
-                    ;
-            }
-        }
-
+        return ComplexDiffTable[(Operator_t)Curr->data](Tree, Curr);
+        
         case NUM:
-            return _NUM(0);
-
+        return _NUM(0);
+        
         case VAR:
         {
             if ((int)Curr->data == 0)
-                return _NUM(1);
-            else
-                return _NUM(0);
-        }       
-    }
+            return _NUM(1);
+        else
+        return _NUM(0);
+}     
+
+case UNKNOWN_TYPE:
+return NULL;
+
+default:
+;
+}
 }
 
 int DblCmp(TreeElem_t a, TreeElem_t b)
 {
     const double EPSILON = 1e-10;
-
+    
     if (fabs(a - b) < EPSILON)
-        return 0;
+    return 0;
 
-    return a - b;
-}
+else if (a - b > EPSILON)
+return 1;
 
-TreeNode_t *_NUM(TreeElem_t data)
-{
-    return NewNode(NUM, data, NULL, NULL);
-}
-
-TreeNode_t *_VAR(int var_num)
-{
-    return NewNode(VAR, (TreeElem_t)var_num, NULL, NULL);
-}
-
-TreeNode_t *_ADD(TreeNode_t *left, TreeNode_t *right)
-{
-    return NewNode(OP, ADD, left, right); 
-}
-
-TreeNode_t *_SUB(TreeNode_t *left, TreeNode_t *right)
-{
-    return NewNode(OP, SUB, left, right);
-}
-
-TreeNode_t *_MUL(TreeNode_t *left, TreeNode_t *right) 
-{ 
-    return NewNode(OP, MUL, left, right); 
-}
-
-TreeNode_t *_DIV(TreeNode_t *left, TreeNode_t *right)
-{
-    return NewNode(OP, DIV, left, right);
-}
-
-TreeNode_t *_SIN(TreeNode_t *left)
-{
-    return NewNode(OP, SIN, left, NULL);
-}
-
-TreeNode_t *_COS(TreeNode_t *left)
-{
-    return NewNode(OP, COS, left, NULL);
-}
-
-TreeNode_t *_LOG(TreeNode_t *left)
-{
-    return NewNode(OP, LOG, left, NULL);
+else 
+return -1;
 }
 
 TreeNode_t *Copy(TreeNode_t *Curr)
 {
     if (!Curr->left && !Curr->right)
-        return NewNode(Curr->type, Curr->data, NULL, NULL);
+    return NewNode(Curr->type, Curr->data, NULL, NULL);
 
-    TreeNode_t *Copy_left  = NULL;
-    TreeNode_t *Copy_right = NULL;
+TreeNode_t *Copy_left  = NULL;
+TreeNode_t *Copy_right = NULL;
+
+if (Curr->left)
+Copy_left  = Copy(Curr->left);
+if (Curr->right)
+Copy_right = Copy(Curr->right);
+
+return NewNode(Curr->type, Curr->data, Copy_left, Copy_right);
+}
+
+TreeElem_t calc_ADD(Tree_t *Tree, TreeNode_t *Curr)
+{
+    return Calc(Tree, Curr->left) + Calc(Tree, Curr->right);
+}
+
+TreeElem_t calc_SUB(Tree_t *Tree, TreeNode_t *Curr)
+{
+    return Calc(Tree, Curr->left) - Calc(Tree, Curr->right);
+}
+
+TreeElem_t calc_MUL(Tree_t *Tree, TreeNode_t *Curr)
+{
+    return Calc(Tree, Curr->left) * Calc(Tree, Curr->right);
+}
+
+TreeElem_t calc_DIV(Tree_t *Tree, TreeNode_t *Curr)
+{
+    TreeElem_t op2 = Calc(Tree, Curr->right);
+    if (DblCmp(op2, 0) == 0)
+    return ERROR_VAL;
+
+return Calc(Tree, Curr->left) / op2;
+}
+
+TreeElem_t calc_POW(Tree_t *Tree, TreeNode_t *Curr)
+{
+    TreeElem_t op1 = Calc(Tree, Curr->left);
+    TreeElem_t power = Calc(Tree, Curr->right);
+    
+    return pow(op1, power);
+}
+
+TreeElem_t calc_SIN(Tree_t *Tree, TreeNode_t *Curr)
+{
+    return sin(Calc(Tree, Curr->left));
+}
+
+TreeElem_t calc_COS(Tree_t *Tree, TreeNode_t *Curr)
+{
+    return cos(Calc(Tree, Curr->left));
+}
+
+TreeElem_t calc_LOG(Tree_t *Tree, TreeNode_t *Curr)
+{
+    return log(Calc(Tree, Curr->left));
+}
+
+TreeNode_t *diff_ADD(Tree_t *Tree, const TreeNode_t *Curr)
+{
+    return _ADD(_DL, _DR);
+}
+
+TreeNode_t *diff_SUB(Tree_t *Tree, const TreeNode_t *Curr)
+{
+    return _SUB(_DL, _DR);
+}
+
+TreeNode_t *diff_MUL(Tree_t *Tree, const TreeNode_t *Curr)
+{
+    return _ADD(_MUL(_DL, _CR), _MUL(_CL, _DR));
+}
+
+TreeNode_t *diff_DIV(Tree_t *Tree, const TreeNode_t *Curr)
+{
+    return _DIV(_SUB(_MUL(_DL, _CR), _MUL(_CL, _DR)), _MUL(_CR, _CR));
+}
+
+TreeNode_t *diff_POW(Tree_t *Tree, const TreeNode_t *Curr)
+{
+    int is_x_left  = FindX(Curr->left);
+    int is_x_right = FindX(Curr->right);
+    
+    if (!is_x_left && !is_x_right)
+    return _NUM(0);
+
+if (is_x_left && !is_x_right)
+return _MUL(_MUL(_CR, _POW(_CL, _SUB(_CR, _NUM(1)))), _DL);
+
+if (!is_x_left && is_x_right)
+return _MUL(_DR, _MUL(_POW(_CL, _CR), _LOG(_CL)));
+
+if (is_x_left && is_x_right)
+return _MUL(_ADD(_MUL(_DL, _LOG(_CL)), _DIV(_MUL(_CR, _DL), _CL)), _POW(_CL, _CR));
+}
+
+int FindX(TreeNode_t *Curr)
+{
+    int is_x_left  = 0;
+    int is_x_right = 0;
+    
+    if (Curr->type == NUM)
+    return 0;
+
+if (Curr->type == VAR && (int)Curr->data == 0)
+return 1;
+
+is_x_left =  FindX(Curr->left);
+if (is_x_left)
+return is_x_left;
+
+is_x_right = FindX(Curr->right);
+if (is_x_right)
+return is_x_right;
+}
+
+TreeNode_t *diff_SIN(Tree_t *Tree, const TreeNode_t *Curr)
+{
+    return _MUL(_COS(_CL), _DL);
+}
+
+TreeNode_t *diff_COS(Tree_t *Tree, const TreeNode_t *Curr)
+{
+    return _MUL(_NUM(-1), _MUL(_SIN(_CL), _DL));
+}
+
+TreeNode_t *diff_LOG(Tree_t *Tree, const TreeNode_t *Curr)
+{
+    return _MUL(_DIV(_NUM(1), _CL), _DR);
+}
+
+void Greet(void)
+{
+    SlowPrintf("###########################\n");
+    SlowPrintf("-----DIFFERENTIATOR.AI-----\n");
+    SlowPrintf("###########################\n\n");   
+}
+
+int ClearBuf(void)
+{
+	int garbage = 0;
+	int ch = 0;
+	while ((ch = getchar()) != '\n')
+		if (!isspace(ch))
+			garbage = 1;
+	return garbage;	
+}
+
+int SelectOption(int *calc_flag, int *diff_flag)
+{
+    SlowPrintf("Select an option:\n");
+    SlowPrintf("Enter cd if you want to choose both\n");
+    SlowPrintf("[c] Calculate the expression\n");
+    SlowPrintf("[d] Differentiate\n");
+    SlowPrintf("[p] Calculate the derivative\n");
+    SlowPrintf("[q] Quit\n");
+
+    int state = 0;
+    const int BUF_SIZE = 10;
+    char buf[BUF_SIZE] = {};
+
+    scanf("%s", buf);
+
+    if (buf[0] == 'q')
+        return 0;
+
+    if (strchr(buf, 'c') != NULL)
+        *calc_flag = 1;
+    if (strchr(buf, 'd') != NULL)
+        *diff_flag = 1;
+
+    return *calc_flag + *diff_flag;
+}
+
+int FindVariables(Tree_t *Tree, TreeNode_t *Curr)
+{
+    static int res = 0;
+
+    if (Curr->type == VAR)
+    {
+        Tree->VarList[(int)Curr->data] = TEMP_VAL;
+        res = 1;
+    }
 
     if (Curr->left)
-        Copy_left  = Copy(Curr->left);
+        FindVariables(Tree, Curr->left);
     if (Curr->right)
-        Copy_right = Copy(Curr->right);
+        FindVariables(Tree, Curr->right);
 
-    return NewNode(Curr->type, Curr->data, Copy_left, Copy_right);
+    return res;
+}
+
+void GetVars(Tree_t *ExprTree)
+{
+    int state = 0;
+
+    SlowPrintf("Enter variables:\n");
+
+    for (size_t i = 0; i < MAX_VARS; i++)
+    {
+        if (ExprTree->VarList[i] == TEMP_VAL)
+        {
+            SlowPrintf("%c = ", 'x' + i);
+
+            while (scanf("%lg", &(ExprTree->VarList[i])) != 1)
+                ClearBuf();
+            ClearBuf();
+        }
+    }
 }
