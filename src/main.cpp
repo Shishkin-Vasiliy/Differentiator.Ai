@@ -1,5 +1,7 @@
+#include "Names.h"
 #include "Tree.h"
 #include "Diff.h"
+#include "DSL.h"
 
 int main(void)
 {
@@ -12,6 +14,8 @@ int main(void)
     LogInit(&TreeLogCtx, &LatexLogCtx);
 
     Differentiator(&DiffCtx, &TreeLogCtx, &LatexLogCtx);
+
+    LatexDump(&DiffCtx, &LatexLogCtx);
 
     DifferentiatorDtor(&DiffCtx);
 

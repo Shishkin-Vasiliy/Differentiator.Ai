@@ -1,5 +1,7 @@
+#include "Names.h"
 #include "Tree.h"
 #include "Diff.h"
+#include "DSL.h"
 
 void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx)
 {
@@ -28,11 +30,16 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
         scanf("%s", buf);
         if (buf[0] == 'q')
             return;
+        
         ClearBuf();
         printf("\n");
         Problem_t *Problem = NULL;
         Problem = (Problem_t *)calloc(1, sizeof(Problem_t));
         Problem->Expression = (Tree_t *)calloc(1, sizeof(Tree_t));
+
+        for (size_t i = 0; i < MAX_VARS; i++)
+            Problem->Expression->VarList[i] = POIZON_VAL;
+        Problem->ExpressionVal = POIZON_VAL;
 
         char *temp = buf;
         BuildFromPreOrder(Problem->Expression, Problem->Expression->root, &temp);
@@ -43,7 +50,10 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
         /// todo pass a struct of flags
         int num_flags = SelectOption(&expr_calc_flag, &expr_diff_flag, &derive_calc_flag);
         if (num_flags == 0)
+        {
+            DiffCtx->num_problems++;
             return;
+        }
 
         int count_vars = FindVariables(Problem->Expression, Problem->Expression->root);
         if (expr_calc_flag) 
@@ -52,7 +62,10 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
             {
                 got_vars = GetVars(Problem->Expression);
                 if (got_vars == 0)
+                {
+                    DiffCtx->num_problems++;
                     return;
+                }
             }
 
             Problem->ExpressionVal = Calc(Problem->Expression, Problem->Expression->root);
@@ -62,6 +75,10 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
         {
             Problem->Derivative = (Tree_t *)calloc(1, sizeof(Tree_t));
             Problem->Derivative->root = Diff(Problem->Expression, Problem->Expression->root);
+
+            for (size_t i = 0; i < MAX_VARS; i++)
+                Problem->Derivative->VarList[i] = POIZON_VAL;
+            Problem->DerivativeVal = POIZON_VAL;
         }
 
         if (derive_calc_flag)
@@ -70,6 +87,10 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
             {
                 Problem->Derivative = (Tree_t *)calloc(1, sizeof(Tree_t));
                 Problem->Derivative->root = Diff(Problem->Expression, Problem->Expression->root);
+
+                for (size_t i = 0; i < MAX_VARS; i++)
+                    Problem->Derivative->VarList[i] = POIZON_VAL;
+                Problem->DerivativeVal = POIZON_VAL;
             }
 
             count_vars = FindVariables(Problem->Derivative, Problem->Derivative->root);
@@ -78,7 +99,10 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
             {
                 got_vars = GetVars(Problem->Derivative);
                 if (got_vars == 0)
+                {
+                    DiffCtx->num_problems++;
                     return;
+                }
             }
 
             Problem->DerivativeVal = Calc(Problem->Derivative, Problem->Derivative->root);
@@ -226,93 +250,6 @@ TreeNode_t *Copy(TreeNode_t *Curr)
     return NewNode(Curr->type, Curr->data, Copy_left, Copy_right);
 }
 
-TreeElem_t calc_ADD(Tree_t *Tree, TreeNode_t *Curr)
-{
-    return Calc(Tree, Curr->left) + Calc(Tree, Curr->right);
-}
-
-TreeElem_t calc_SUB(Tree_t *Tree, TreeNode_t *Curr)
-{
-    return Calc(Tree, Curr->left) - Calc(Tree, Curr->right);
-}
-
-TreeElem_t calc_MUL(Tree_t *Tree, TreeNode_t *Curr)
-{
-    return Calc(Tree, Curr->left) * Calc(Tree, Curr->right);
-}
-
-TreeElem_t calc_DIV(Tree_t *Tree, TreeNode_t *Curr)
-{
-    TreeElem_t op2 = Calc(Tree, Curr->right);
-    if (DblCmp(op2, 0) == 0)
-        return ERROR_VAL;
-
-return Calc(Tree, Curr->left) / op2;
-}
-
-TreeElem_t calc_POW(Tree_t *Tree, TreeNode_t *Curr)
-{
-    TreeElem_t op1 = Calc(Tree, Curr->left);
-    TreeElem_t power = Calc(Tree, Curr->right);
-    
-    return pow(op1, power);
-}
-
-TreeElem_t calc_SIN(Tree_t *Tree, TreeNode_t *Curr)
-{
-    return sin(Calc(Tree, Curr->left));
-}
-
-TreeElem_t calc_COS(Tree_t *Tree, TreeNode_t *Curr)
-{
-    return cos(Calc(Tree, Curr->left));
-}
-
-TreeElem_t calc_LOG(Tree_t *Tree, TreeNode_t *Curr)
-{
-    return log(Calc(Tree, Curr->left));
-}
-
-TreeNode_t *diff_ADD(Tree_t *Tree, const TreeNode_t *Curr)
-{
-    return _ADD(_DL, _DR);
-}
-
-TreeNode_t *diff_SUB(Tree_t *Tree, const TreeNode_t *Curr)
-{
-    return _SUB(_DL, _DR);
-}
-
-TreeNode_t *diff_MUL(Tree_t *Tree, const TreeNode_t *Curr)
-{
-    return _ADD(_MUL(_DL, _CR), _MUL(_CL, _DR));
-}
-
-TreeNode_t *diff_DIV(Tree_t *Tree, const TreeNode_t *Curr)
-{
-    return _DIV(_SUB(_MUL(_DL, _CR), _MUL(_CL, _DR)), _MUL(_CR, _CR));
-}
-
-TreeNode_t *diff_POW(Tree_t *Tree, const TreeNode_t *Curr)
-{
-    int is_x_left  = FindX(Curr->left);
-    int is_x_right = FindX(Curr->right);
-    
-    if (!is_x_left && !is_x_right)
-        return _NUM(0);
-
-    if (is_x_left && !is_x_right)
-        return _MUL(_MUL(_CR, _POW(_CL, _SUB(_CR, _NUM(1)))), _DL);
-
-    if (!is_x_left && is_x_right)
-        return _MUL(_DR, _MUL(_POW(_CL, _CR), _LOG(_CL)));
-
-    if (is_x_left && is_x_right)
-        return _MUL(_ADD(_MUL(_DL, _LOG(_CL)), _DIV(_MUL(_CR, _DL), _CL)), _POW(_CL, _CR));
-
-    return NULL;
-}
-
 int FindX(TreeNode_t *Curr)
 {
     int is_x_left  = 0;
@@ -333,21 +270,6 @@ int FindX(TreeNode_t *Curr)
         return is_x_right;
 
     return 0;
-}
-
-TreeNode_t *diff_SIN(Tree_t *Tree, const TreeNode_t *Curr)
-{
-    return _MUL(_COS(_CL), _DL);
-}
-
-TreeNode_t *diff_COS(Tree_t *Tree, const TreeNode_t *Curr)
-{
-    return _MUL(_NUM(-1), _MUL(_SIN(_CL), _DL));
-}
-
-TreeNode_t *diff_LOG(Tree_t *Tree, const TreeNode_t *Curr)
-{
-    return _MUL(_DIV(_NUM(1), _CL), _DR);
 }
 
 void Greet(void)
@@ -450,3 +372,27 @@ int GetVars(Tree_t *ExprTree)
     }
     return got_vars;
 }
+
+void SlowPrintf(const char *fmt, ...)
+{
+    const int MAX_STR = 256;
+    const int SLEEP_TIME = 10000;
+
+    char buf[MAX_STR] = {};
+    va_list args = {};
+
+    va_start(args, fmt);
+    vsprintf(buf, fmt, args);
+    va_end(args);
+    
+    char *ptr = buf;
+
+    for (; *ptr; ptr++)
+    {
+        printf("%c", *ptr);
+        fflush(stdout);
+
+        usleep(SLEEP_TIME);
+    }
+}
+

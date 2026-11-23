@@ -4,11 +4,16 @@ rankdir=TB;
 nodesep=0.8;
 ranksep=0.9;
 node_0x5030000000a0 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
-       label="  { OP | SIN }"];
+       label="  { OP | MUL }"];
 { rank=source; node_0x5030000000a0 };
 node_0x5030000000d0 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
-       label="  { VAR | 0 }"];
+       label="  { NUM | 2 }"];
 { rank=sink; node_0x5030000000d0 };
+node_0x503000000100 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
+       label="  { NUM | 4 }"];
+{ rank=sink; node_0x503000000100 };
 edge [color="#FFFFFF"];
 node_0x5030000000a0:sw -> node_0x5030000000d0:n [color="#228B22"];
+edge [color="#FFFFFF"];
+node_0x5030000000a0:se -> node_0x503000000100:n [color="#228B22"];
 }

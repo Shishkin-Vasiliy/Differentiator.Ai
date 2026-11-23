@@ -1,5 +1,7 @@
+#include "Names.h"
 #include "Tree.h"
 #include "Diff.h"
+#include "DSL.h"
 
 TreeErr_t PreOrderCtor(Tree_t *Tree, const char *file_name)
 {
@@ -270,7 +272,7 @@ void DescribeEdges(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
         DescribeEdges(Tree, Curr->right, fp);
 }
 
-int LatexDump(Tree_t *Tree, LatexLogCtx_t *LatexLogCtx)
+int LatexDump(DiffCtx_t *DiffCtx, LatexLogCtx_t *LatexLogCtx)
 {
     const int PATH_SIZE = 30;
     const int COMMAND_SIZE = 100;
@@ -287,7 +289,7 @@ int LatexDump(Tree_t *Tree, LatexLogCtx_t *LatexLogCtx)
     if (!latex_fp)
         return EOF;
 
-    ConstructTex(Tree, latex_fp);
+    ConstructTex(DiffCtx, latex_fp);
     fclose(latex_fp);
 
     snprintf(command, COMMAND_SIZE, "pdflatex -interaction=batchmode -output-directory=Log %s > /dev/null", latex_path);
@@ -305,16 +307,51 @@ int LatexDump(Tree_t *Tree, LatexLogCtx_t *LatexLogCtx)
     return 0;
 }
 
-void ConstructTex(Tree_t *Tree, FILE *fp)
+void ConstructTex(DiffCtx_t *DiffCtx, FILE *fp)
 {
     if (!fp)
         return;
 
     TexBeginning(fp);
 
-    fprintf(fp, "$");
-    DescribeExpression(Tree, fp);
-    fprintf(fp, "$");
+    for (size_t i = 0; i < DiffCtx->num_problems; i++)
+    {
+        fprintf(fp, "\\textbf{Problem %lu}\n\n", i);
+
+        if (DiffCtx->ProblemTable[i]->Expression != NULL)
+        {
+            fprintf(fp, "Expression: ");
+            fprintf(fp, "$");
+
+            DescribeExpression(DiffCtx->ProblemTable[i]->Expression, fp);
+
+            if (DblCmp(DiffCtx->ProblemTable[i]->ExpressionVal, POIZON_VAL) != 0)
+            {
+                fprintf(fp, "=");
+                fprintf(fp, "%lg", DiffCtx->ProblemTable[i]->ExpressionVal);
+            }
+
+            fprintf(fp, "$");
+            fprintf(fp, "\n\n");
+        }
+
+        if (DiffCtx->ProblemTable[i]->Derivative != NULL)
+        {
+            fprintf(fp, "Derivative: ");
+            fprintf(fp, "$");
+
+            DescribeExpression(DiffCtx->ProblemTable[i]->Derivative, fp);
+
+            if (DblCmp(DiffCtx->ProblemTable[i]->DerivativeVal, POIZON_VAL) != 0)
+            {
+                fprintf(fp, "=");
+                fprintf(fp, "%lg", DiffCtx->ProblemTable[i]->DerivativeVal);
+            }
+
+            fprintf(fp, "$");
+            fprintf(fp, "\\medskip\n");
+        }
+    }
 
     TexEnding(fp);
 }
@@ -360,7 +397,7 @@ void TexBeginning(FILE *fp)
 
     fprintf(fp, "Vot reshenie kotoroe privel deepseek\n");
 
-    fprintf(fp, "\\photoPlaceholder{10cm}{Reshenie primera}{./images/solution_%d.png}\n\n", 0);
+    fprintf(fp, "\\photoPlaceholder{4cm}{Reshenie primera}{./images/solution.png}\n\n");
 
     fprintf(fp, "chto concretno ne ponyatno?\n\n");
 }
@@ -762,84 +799,4 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
     }
 
     return Curr;
-}
-
-void SlowPrintf(const char *fmt, ...)
-{
-    const int MAX_STR = 256;
-    const int SLEEP_TIME = 10000;
-
-    char buf[MAX_STR] = {};
-    va_list args = {};
-
-    va_start(args, fmt);
-    vsprintf(buf, fmt, args);
-    va_end(args);
-    
-    char *ptr = buf;
-
-    for (; *ptr; ptr++)
-    {
-        printf("%c", *ptr);
-        fflush(stdout);
-
-        usleep(SLEEP_TIME);
-    }
-}
-
-void print_ADD(void) { printf("+"); }
-void print_SUB(void) { printf("-"); }
-void print_MUL(void) { printf("*"); }
-void print_DIV(void) { printf("/"); }
-void print_POW(void) { printf("^"); }
-void print_SIN(void) { printf("sin"); }
-void print_COS(void) { printf("cos"); }
-void print_LOG(void) { printf("log"); }
-
-void dot_ADD(TreeNode_t *Curr, FILE *fp) 
-{
-    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-    fprintf(fp, "       label=\"  { OP | ADD }\"];\n");
-}
-
-void dot_SUB(TreeNode_t *Curr, FILE *fp) 
-{
-    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-    fprintf(fp, "       label=\"  { OP | SUB }\"];\n");
-}
-
-void dot_MUL(TreeNode_t *Curr, FILE *fp) 
-{
-    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-    fprintf(fp, "       label=\"  { OP | MUL }\"];\n");
-}
-
-void dot_DIV(TreeNode_t *Curr, FILE *fp) 
-{
-    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-    fprintf(fp, "       label=\"  { OP | DIV }\"];\n");
-}
-
-void dot_POW(TreeNode_t *Curr, FILE *fp) 
-{
-    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-    fprintf(fp, "       label=\"  { OP | POW }\"];\n");
-}
-
-void dot_SIN(TreeNode_t *Curr, FILE *fp) 
-{
-    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-    fprintf(fp, "       label=\"  { OP | SIN }\"];\n");
-}
-
-void dot_COS(TreeNode_t *Curr, FILE *fp) 
-{
-    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-    fprintf(fp, "       label=\"  { OP | COS }\"];\n");
-}
-
-void dot_LOG(TreeNode_t *Curr, FILE *fp) 
-{
-    fprintf(fp, "node_%p [shape=Mrecord; style=filled; fillcolor=\"#DB7093\"; fontcolor=\"#FFFFFF\";\n", Curr);
-    fprintf(fp, "       label=\"  { OP | LOG }\"];\n");
 }
