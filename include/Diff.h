@@ -3,7 +3,7 @@
 
 const int MAX_PROBLEMS = 16;
 const TreeElem_t ERROR_VAL = 0xFFFFFFFF;
-const TreeElem_t TEMP_VAL = 0;
+const TreeElem_t TEMP_VAL = 0x00BADA55;
 
 struct Problem_t {
     Tree_t *Expression;
@@ -18,10 +18,12 @@ struct DiffCtx_t {
 };
 
 void Greet(void);
-int SelectOption(int *calc_flag, int *diff_flag);
-void GetVars(Tree_t *ExprTree);
+int SelectOption(int *expr_calc_flag, int *expr_diff_flag, int *derive_calc_flag);
+int GetVars(Tree_t *ExprTree);
 
 void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx);
+void DifferentiatorDtor(DiffCtx_t *DiffCtx);
+
 TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr);
 TreeNode_t *Diff(Tree_t *Tree, const TreeNode_t *Curr);
 TreeNode_t *Copy(TreeNode_t *Curr);

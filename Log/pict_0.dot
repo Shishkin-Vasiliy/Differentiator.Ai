@@ -1,0 +1,14 @@
+digraph {
+bgcolor="#FFE4E1";
+rankdir=TB;
+nodesep=0.8;
+ranksep=0.9;
+node_0x5030000000a0 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
+       label="  { OP | SIN }"];
+{ rank=source; node_0x5030000000a0 };
+node_0x5030000000d0 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
+       label="  { VAR | 0 }"];
+{ rank=sink; node_0x5030000000d0 };
+edge [color="#FFFFFF"];
+node_0x5030000000a0:sw -> node_0x5030000000d0:n [color="#228B22"];
+}
