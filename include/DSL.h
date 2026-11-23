@@ -21,6 +21,46 @@
 #define _CL Copy(Curr->left)
 #define _CR Copy(Curr->right)
 
+#define _IFISLEFT(val)  if (Curr->left->type == NUM && DblCmp(Curr->left->data, (val)) == 0)
+#define _IFISRIGHT(val) if (Curr->right->type == NUM && DblCmp(Curr->right->data, (val)) == 0)
+
+#define _ELIM_LEFT_IDENTITY             \
+do                                      \
+{                                       \
+    TempRight = Curr->right;            \
+    Curr->type = TempRight->type;       \
+    Curr->data = TempRight->data;       \
+    free(Curr->left);                   \
+    Curr->left  = TempRight->left;      \
+    Curr->right = TempRight->right;     \
+    free(TempRight);                    \
+} while(0)
+
+#define _ELIM_RIGHT_IDENTITY            \
+do                                      \
+{                                       \
+    TempLeft = Curr->left;              \
+    Curr->type = TempLeft->type;        \
+    Curr->data = TempLeft->data;        \
+    free(Curr->right);                  \
+    Curr->left  = TempLeft->left;       \
+    Curr->right = TempLeft->right;      \
+    free(TempLeft);                     \
+} while(0)
+
+#define _ELIM_KILLER_NODE               \
+do                                      \
+{                                       \
+    Curr->type = NUM;                   \
+    Curr->data = 0;                     \
+    if (Curr->left)                     \
+        TreeFree(Curr->left);           \
+    if (Curr->right)                    \
+        TreeFree(Curr->right);          \
+    Curr->left  = NULL;                 \
+    Curr->right = NULL;                 \
+} while(0)
+
 TreeElem_t calc_ADD(Tree_t *Tree, TreeNode_t *Curr);
 TreeElem_t calc_SUB(Tree_t *Tree, TreeNode_t *Curr);
 TreeElem_t calc_MUL(Tree_t *Tree, TreeNode_t *Curr);

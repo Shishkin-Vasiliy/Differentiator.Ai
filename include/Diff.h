@@ -13,6 +13,7 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
 void DifferentiatorDtor(DiffCtx_t *DiffCtx);
 
 TreeElem_t ConstantFolding(Tree_t *Tree, TreeNode_t *Curr);
+int IdentityElim(Tree_t *Tree, TreeNode_t *Curr);
 TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr);
 int DblCmp(TreeElem_t a, TreeElem_t b);
 

@@ -43,7 +43,8 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
 
         char *temp = buf;
         BuildFromPreOrder(Problem->Expression, Problem->Expression->root, &temp);
-        ConstantFolding(Problem->Expression, Problem->Expression->root);
+        //ConstantFolding(Problem->Expression, Problem->Expression->root);
+        IdentityElim(Problem->Expression, Problem->Expression->root);
 
         DiffCtx->ProblemTable[DiffCtx->num_problems] = Problem;
         //////
@@ -221,11 +222,11 @@ TreeElem_t ConstantFolding(Tree_t *Tree, TreeNode_t *Curr)
             return ERROR_VAL;
         }
 
-        case VAR:
-            return ERROR_VAL;
-
         case NUM:
             return Curr->data;
+
+        case VAR:
+            return ERROR_VAL;
 
         case UNKNOWN_TYPE:
             return ERROR_VAL;
@@ -235,6 +236,60 @@ TreeElem_t ConstantFolding(Tree_t *Tree, TreeNode_t *Curr)
     }
 
     return Result;
+}
+
+int IdentityElim(Tree_t *Tree, TreeNode_t *Curr)
+{
+    if ((Type_t)Curr->type != OP)
+        return 0;
+
+    TreeNode_t *TempLeft    = NULL;
+    TreeNode_t *TempRight   = NULL;
+
+    switch((Operator_t)Curr->data)
+    {
+        case ADD: 
+        {
+            _IFISLEFT(0)
+                _ELIM_LEFT_IDENTITY;
+        
+            _IFISRIGHT(0)
+                _ELIM_RIGHT_IDENTITY;
+
+            return 1;
+        }
+        case SUB:
+        {
+            _IFISRIGHT(0)
+                _ELIM_LEFT_IDENTITY;
+
+            return 1;
+        }
+        case MUL:
+        {
+            _IFISLEFT(0)
+                _ELIM_KILLER_NODE;
+
+            _IFISRIGHT(0)
+                _ELIM_KILLER_NODE;
+
+            _IFISLEFT(1)
+                _ELIM_LEFT_IDENTITY;
+
+            _IFISRIGHT(1)
+                _ELIM_RIGHT_IDENTITY;
+
+            return 1;
+        }
+
+        case DIV:
+        {
+            _IFISRIGHT(1)
+                _ELIM_RIGHT_IDENTITY;
+
+            return 1;
+        }
+    }
 }
 
 typedef TreeNode_t* (*ComplexDiffCase_t)(Tree_t *Tree, const TreeNode_t *Curr);
