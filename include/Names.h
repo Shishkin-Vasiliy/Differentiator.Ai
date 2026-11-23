@@ -39,6 +39,11 @@ enum Operator_t {
     LOG
 };
 
+enum IsOptimized_t {
+    TREE_IS_OPTIMIZED,
+    TREE_IS_CHANGING
+};
+
 struct TreeNode_t {
     Type_t type;
     TreeElem_t data;

@@ -4,7 +4,7 @@ rankdir=TB;
 nodesep=0.8;
 ranksep=0.9;
 node_0x5030000000a0 [shape=Mrecord; style=filled; fillcolor="#DB7093"; fontcolor="#FFFFFF";
-       label="  { NUM | 5 }"];
+       label="  { NUM | 0 }"];
 { rank=source; node_0x5030000000a0 };
 { rank=sink; node_0x5030000000a0 };
 }

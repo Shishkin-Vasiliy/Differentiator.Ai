@@ -698,9 +698,12 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
 
             case '-':
             {
-                Curr->type = OP;
-                Curr->data = SUB;
-                flag = 1;
+                if ((*buf)[1] == '(')
+                {
+                    Curr->type = OP;
+                    Curr->data = SUB;
+                    flag = 1;
+                }
             }
             break;
 

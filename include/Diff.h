@@ -12,8 +12,10 @@ int GetVars(Tree_t *ExprTree);
 void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t *LatexLogCtx);
 void DifferentiatorDtor(DiffCtx_t *DiffCtx);
 
-TreeElem_t ConstantFolding(Tree_t *Tree, TreeNode_t *Curr);
-int IdentityElim(Tree_t *Tree, TreeNode_t *Curr);
+void Optimize(Tree_t *Tree, TreeNode_t *Curr);
+TreeElem_t FoldConstants(Tree_t *Tree, TreeNode_t *Curr);
+IsOptimized_t ElimIdentities(Tree_t *Tree, TreeNode_t *Curr);
+
 TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr);
 int DblCmp(TreeElem_t a, TreeElem_t b);
 

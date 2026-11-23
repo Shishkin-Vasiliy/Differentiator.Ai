@@ -9,8 +9,6 @@ int main(void)
     LatexLogCtx_t LatexLogCtx = {};
     DiffCtx_t DiffCtx = {};
 
-    //   add DiffCtx ctor & dtor to calloc and free ProblemTable[]
-
     LogInit(&TreeLogCtx, &LatexLogCtx);
 
     Differentiator(&DiffCtx, &TreeLogCtx, &LatexLogCtx);

@@ -43,8 +43,7 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
 
         char *temp = buf;
         BuildFromPreOrder(Problem->Expression, Problem->Expression->root, &temp);
-        //ConstantFolding(Problem->Expression, Problem->Expression->root);
-        IdentityElim(Problem->Expression, Problem->Expression->root);
+        Optimize(Problem->Expression, Problem->Expression->root);
 
         DiffCtx->ProblemTable[DiffCtx->num_problems] = Problem;
         //////
@@ -78,6 +77,8 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
             Problem->Derivative = (Tree_t *)calloc(1, sizeof(Tree_t));
             Problem->Derivative->root = Diff(Problem->Expression, Problem->Expression->root);
 
+            Optimize(Problem->Derivative, Problem->Derivative->root);
+
             for (size_t i = 0; i < MAX_VARS; i++)
                 Problem->Derivative->VarList[i] = POIZON_VAL;
             Problem->DerivativeVal = POIZON_VAL;
@@ -89,6 +90,8 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
             {
                 Problem->Derivative = (Tree_t *)calloc(1, sizeof(Tree_t));
                 Problem->Derivative->root = Diff(Problem->Expression, Problem->Expression->root);
+
+                Optimize(Problem->Derivative, Problem->Derivative->root);
 
                 for (size_t i = 0; i < MAX_VARS; i++)
                     Problem->Derivative->VarList[i] = POIZON_VAL;
@@ -183,7 +186,18 @@ TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr)
     }
 }
 
-TreeElem_t ConstantFolding(Tree_t *Tree, TreeNode_t *Curr)
+void Optimize(Tree_t *Tree, TreeNode_t *Curr)
+{
+    IsOptimized_t is_tree_changing = TREE_IS_CHANGING;
+
+    while (is_tree_changing)
+    {
+        FoldConstants(Tree, Curr);
+        is_tree_changing = ElimIdentities(Tree, Curr);
+    }
+}
+
+TreeElem_t FoldConstants(Tree_t *Tree, TreeNode_t *Curr)
 {
     TreeElem_t LeftVal   = POIZON_VAL;
     TreeElem_t RightVal  = POIZON_VAL; 
@@ -194,9 +208,9 @@ TreeElem_t ConstantFolding(Tree_t *Tree, TreeNode_t *Curr)
         case OP:
         {
             if (Curr->left)
-                LeftVal  = ConstantFolding(Tree, Curr->left);
+                LeftVal  = FoldConstants(Tree, Curr->left);
             if (Curr->right)
-                RightVal = ConstantFolding(Tree, Curr->right);
+                RightVal = FoldConstants(Tree, Curr->right);
 
             if ((Curr->left &&  Curr->right && DblCmp(LeftVal, ERROR_VAL) != 0 && DblCmp(RightVal, ERROR_VAL) != 0)
             ||  (Curr->left && !Curr->right && DblCmp(LeftVal, ERROR_VAL) != 0))
@@ -238,10 +252,12 @@ TreeElem_t ConstantFolding(Tree_t *Tree, TreeNode_t *Curr)
     return Result;
 }
 
-int IdentityElim(Tree_t *Tree, TreeNode_t *Curr)
+IsOptimized_t ElimIdentities(Tree_t *Tree, TreeNode_t *Curr)
 {
+    IsOptimized_t is_tree_changing = TREE_IS_OPTIMIZED;
+
     if ((Type_t)Curr->type != OP)
-        return 0;
+        return TREE_IS_OPTIMIZED;
 
     TreeNode_t *TempLeft    = NULL;
     TreeNode_t *TempRight   = NULL;
@@ -256,14 +272,14 @@ int IdentityElim(Tree_t *Tree, TreeNode_t *Curr)
             _IFISRIGHT(0)
                 _ELIM_RIGHT_IDENTITY;
 
-            return 1;
+            return is_tree_changing;
         }
         case SUB:
         {
             _IFISRIGHT(0)
                 _ELIM_LEFT_IDENTITY;
 
-            return 1;
+            return is_tree_changing;
         }
         case MUL:
         {
@@ -279,7 +295,7 @@ int IdentityElim(Tree_t *Tree, TreeNode_t *Curr)
             _IFISRIGHT(1)
                 _ELIM_RIGHT_IDENTITY;
 
-            return 1;
+            return is_tree_changing;
         }
 
         case DIV:
@@ -287,9 +303,18 @@ int IdentityElim(Tree_t *Tree, TreeNode_t *Curr)
             _IFISRIGHT(1)
                 _ELIM_RIGHT_IDENTITY;
 
-            return 1;
+            _IFISLEFT(0)
+                _ELIM_KILLER_NODE;
+
+            return is_tree_changing;
         }
+
+        case POW: case SIN: case COS: case LOG:
+        default:
+            return is_tree_changing;
     }
+
+    return is_tree_changing;
 }
 
 typedef TreeNode_t* (*ComplexDiffCase_t)(Tree_t *Tree, const TreeNode_t *Curr);

@@ -34,6 +34,7 @@ do                                      \
     Curr->left  = TempRight->left;      \
     Curr->right = TempRight->right;     \
     free(TempRight);                    \
+    is_tree_changing = TREE_IS_CHANGING;\
 } while(0)
 
 #define _ELIM_RIGHT_IDENTITY            \
@@ -46,6 +47,7 @@ do                                      \
     Curr->left  = TempLeft->left;       \
     Curr->right = TempLeft->right;      \
     free(TempLeft);                     \
+    is_tree_changing = TREE_IS_CHANGING;\
 } while(0)
 
 #define _ELIM_KILLER_NODE               \
@@ -59,6 +61,7 @@ do                                      \
         TreeFree(Curr->right);          \
     Curr->left  = NULL;                 \
     Curr->right = NULL;                 \
+    is_tree_changing = TREE_IS_CHANGING;\
 } while(0)
 
 TreeElem_t calc_ADD(Tree_t *Tree, TreeNode_t *Curr);
