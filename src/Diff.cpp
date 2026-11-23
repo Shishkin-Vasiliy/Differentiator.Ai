@@ -30,7 +30,7 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
         scanf("%s", buf);
         if (buf[0] == 'q')
             return;
-        
+
         ClearBuf();
         printf("\n");
         Problem_t *Problem = NULL;
@@ -43,7 +43,8 @@ void Differentiator(DiffCtx_t *DiffCtx, TreeLogCtx_t *TreeLogCtx, LatexLogCtx_t 
 
         char *temp = buf;
         BuildFromPreOrder(Problem->Expression, Problem->Expression->root, &temp);
-        
+        ConstantFolding(Problem->Expression, Problem->Expression->root);
+
         DiffCtx->ProblemTable[DiffCtx->num_problems] = Problem;
         //////
 
@@ -162,7 +163,7 @@ static CalcCase_t CalcCaseTable[] = {
 
 TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr)
 {
-    switch(Curr->type)
+    switch((Type_t)Curr->type)
     {
         case OP:
             return CalcCaseTable[(Operator_t)Curr->data](Tree, Curr);
@@ -181,6 +182,61 @@ TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr)
     }
 }
 
+TreeElem_t ConstantFolding(Tree_t *Tree, TreeNode_t *Curr)
+{
+    TreeElem_t LeftVal   = POIZON_VAL;
+    TreeElem_t RightVal  = POIZON_VAL; 
+    TreeElem_t Result    = POIZON_VAL;
+
+    switch((Type_t)Curr->type)
+    {
+        case OP:
+        {
+            if (Curr->left)
+                LeftVal  = ConstantFolding(Tree, Curr->left);
+            if (Curr->right)
+                RightVal = ConstantFolding(Tree, Curr->right);
+
+            if ((Curr->left &&  Curr->right && DblCmp(LeftVal, ERROR_VAL) != 0 && DblCmp(RightVal, ERROR_VAL) != 0)
+            ||  (Curr->left && !Curr->right && DblCmp(LeftVal, ERROR_VAL) != 0))
+            {
+                Result      = CalcCaseTable[(Operator_t)Curr->data](Tree, Curr);
+                Curr->type  = NUM;
+                Curr->data  = Result;
+                
+                if (Curr->left)
+                {
+                    TreeFree(Curr->left);
+                    Curr->left  = NULL;
+                }
+                if (Curr->right)
+                {
+                    TreeFree(Curr->right);
+                    Curr->right = NULL;
+                }
+
+                return Result;
+            }
+            
+            return ERROR_VAL;
+        }
+
+        case VAR:
+            return ERROR_VAL;
+
+        case NUM:
+            return Curr->data;
+
+        case UNKNOWN_TYPE:
+            return ERROR_VAL;
+
+        default:
+            return ERROR_VAL;
+    }
+
+    return Result;
+}
+
 typedef TreeNode_t* (*ComplexDiffCase_t)(Tree_t *Tree, const TreeNode_t *Curr);
 
 static const ComplexDiffCase_t ComplexDiffTable[] = {
@@ -196,7 +252,7 @@ static const ComplexDiffCase_t ComplexDiffTable[] = {
 
 TreeNode_t *Diff(Tree_t *Tree, const TreeNode_t *Curr)
 {
-    switch(Curr->type)
+    switch((Type_t)Curr->type)
     {
         case OP:
         return ComplexDiffTable[(Operator_t)Curr->data](Tree, Curr);
@@ -219,6 +275,7 @@ TreeNode_t *Diff(Tree_t *Tree, const TreeNode_t *Curr)
             return NULL;
     }
 }
+
 
 int DblCmp(TreeElem_t a, TreeElem_t b)
 {
@@ -395,4 +452,6 @@ void SlowPrintf(const char *fmt, ...)
         usleep(SLEEP_TIME);
     }
 }
+
+
 
