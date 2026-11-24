@@ -1,7 +1,9 @@
-#include "Names.h"
-#include "Tree.h"
-#include "Diff.h"
+#include "Common.h"
+#include "Differentiator.h"
 #include "DSL.h"
+#include "Dump.h"
+#include "Tools.h"
+#include "Tree.h"
 
 int main(void)
 {

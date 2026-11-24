@@ -1,5 +1,5 @@
-#ifndef NAMES_H
-#define NAMES_H
+#ifndef COMMON_H
+#define COMMON_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,6 +87,12 @@ struct Problem_t {
 struct DiffCtx_t {
     Problem_t *ProblemTable[MAX_PROBLEMS];
     size_t num_problems;
+};
+
+struct Flags_t {
+    int expr_calc_flag;
+    int expr_diff_flag;
+    int derive_calc_flag;
 };
 
 #endif

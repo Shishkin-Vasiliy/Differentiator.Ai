@@ -1,7 +1,9 @@
-#include "Names.h"
-#include "Tree.h"
-#include "Diff.h"
+#include "Common.h"
+#include "Differentiator.h"
 #include "DSL.h"
+#include "Dump.h"
+#include "Tools.h"
+#include "Tree.h"
 
 TreeElem_t calc_ADD(Tree_t *Tree, TreeNode_t *Curr)
 {
@@ -24,7 +26,7 @@ TreeElem_t calc_DIV(Tree_t *Tree, TreeNode_t *Curr)
     if (DblCmp(op2, 0) == 0)
         return ERROR_VAL;
 
-return Calc(Tree, Curr->left) / op2;
+    return Calc(Tree, Curr->left) / op2;
 }
 
 TreeElem_t calc_POW(Tree_t *Tree, TreeNode_t *Curr)

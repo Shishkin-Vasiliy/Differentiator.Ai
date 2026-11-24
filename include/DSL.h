@@ -1,9 +1,7 @@
 #ifndef DSL_H
 #define DSL_H
 
-#include "Names.h"
-#include "Tree.h"
-#include "Diff.h"
+#include "Common.h"
 
 #define _NUM(data)          NewNode(NUM, data, NULL, NULL)
 #define _VAR(var_num)       NewNode(VAR, (TreeElem_t)var_num, NULL, NULL)
