@@ -457,6 +457,8 @@ void PreOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
                 }
                 return;
 
+                case OP_COUNT:
+
                 default:
                     ;
             }
@@ -572,6 +574,8 @@ void InOrderExpression(Tree_t *Tree, TreeNode_t *Curr, FILE *fp)
                 case LOG:
                     PreOrderExpression(Tree, Curr, fp);
                 return;
+
+                case OP_COUNT:
 
                 default:
                     ;

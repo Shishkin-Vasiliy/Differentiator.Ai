@@ -368,6 +368,7 @@ IsOptimized_t ElimIdentities(Tree_t *Tree, TreeNode_t *Curr)
         }
 
         case POW: case SIN: case COS: case LOG:
+        case OP_COUNT:
         default:
             return is_tree_changing;
     }

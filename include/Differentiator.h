@@ -16,7 +16,6 @@ int ExprDiff(Problem_t *Problem);
 int DeriveCalc(DiffCtx_t *DiffCtx, Problem_t *Problem);
 
 TreeElem_t Calc(Tree_t *Tree, TreeNode_t *Curr);
-
 TreeNode_t *Diff(Tree_t *Tree, const TreeNode_t *Curr);
 
 void Optimize(Tree_t *Tree, TreeNode_t *Curr);

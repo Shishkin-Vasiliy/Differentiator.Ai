@@ -5,22 +5,6 @@
 #include "Tools.h"
 #include "Tree.h"
 
-TreeErr_t PreOrderCtor(Tree_t *Tree, const char *file_name)
-{
-    char *buf = NULL;
-    ReadFromFile(&buf, file_name);
-    
-    char *temp = buf;
-    BuildFromPreOrder(Tree, Tree->root, &temp);
-
-    for (size_t i = 0; i < MAX_VARS; i++)
-        Tree->VarList[i] = POIZON_VAL;
-
-    free(buf);
-
-    return TREE_OK;
-}
-
 TreeNode_t *NewNode(Type_t type, TreeElem_t data, TreeNode_t *left, TreeNode_t *right)
 {
     TreeNode_t *Node = (TreeNode_t *)calloc(1, sizeof(TreeNode_t));
@@ -54,12 +38,25 @@ TreeErr_t TreeFree(TreeNode_t *Curr)
     return TREE_OK;
 }
 
+// todo массив из строк со всеми названиями функций
+
+static const char *OP_NAMES[OP_COUNT] = {
+    "+",
+    "-",
+    "*",
+    "/",
+    "^",
+    "sin",
+    "cos",
+    "log"
+};
+
 TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
 {
     char data[DATA_SIZE] = {};
-    size_t len = 0;
-    int num_elems = 0;
-    int flag = 0;
+    size_t len           = 0;
+    int num_elems        = 0;
+    int flag             = 0;
 
     if (**buf == '(')
     {
@@ -72,76 +69,16 @@ TreeNode_t *BuildFromPreOrder(Tree_t *Tree, TreeNode_t *Curr, char **buf)
     num_elems = sscanf(*buf, "%[^()]", data);
     if (num_elems == 1)
     {
-        switch((*buf)[0])
+        for (size_t i = 0; i < OP_COUNT; i++)
         {
-            case '+':
+            if (strcmp(data, OP_NAMES[i]) == 0)
             {
                 Curr->type = OP;
-                Curr->data = ADD;
+                Curr->data = i;
                 flag = 1;
+                break;
             }
-            break;
-
-            case '-':
-            {
-                if ((*buf)[1] == '(')
-                {
-                    Curr->type = OP;
-                    Curr->data = SUB;
-                    flag = 1;
-                }
-            }
-            break;
-
-            case '*':
-            {
-                Curr->type = OP;
-                Curr->data = MUL;
-                flag = 1;
-            }
-            break;
-
-            case '/':
-            {
-                Curr->type = OP;
-                Curr->data = DIV;
-                flag = 1;
-            }
-            break;
-
-            case '^':
-            {
-                Curr->type = OP;
-                Curr->data = POW;
-                flag = 1;
-            }
-            break;
-
-            default:
-                ;
         }
-
-        if (isalpha(data[0]) && flag == 0)
-        {
-            if (strcmp(data, "sin") == 0)
-            {
-                Curr->type = OP;
-                Curr->data = SIN;
-                flag = 1;
-            }
-            else if (strcmp(data, "cos") == 0)
-            {
-                Curr->type = OP;
-                Curr->data = COS;
-                flag = 1;
-            }
-            else if (strcmp(data, "log") == 0)
-            {
-                Curr->type = OP;
-                Curr->data = LOG;
-                flag = 1;
-            }
-        }        ///////////////////////// todo
 
         if (isalpha(data[0]) && flag == 0)
         {

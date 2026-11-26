@@ -36,7 +36,8 @@ enum Operator_t {
     POW,
     SIN,
     COS,
-    LOG
+    LOG,
+    OP_COUNT
 };
 
 enum IsOptimized_t {
